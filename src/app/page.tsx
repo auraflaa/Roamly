@@ -1,11 +1,13 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { motion, AnimatePresence, useScroll, useTransform } from 'framer-motion';
-import { Compass, Users, Shield, Star, MapPin, Sparkles, ArrowRight, ChevronRight, Play } from 'lucide-react';
+import { Compass, Users, Shield, Star, MapPin, Sparkles, ArrowRight, ChevronRight, Play, Loader2 } from 'lucide-react';
+import { collection, getDocs, query, limit, orderBy } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
 import Footer from '@/components/layout/Footer';
-import { SEED_GEMS } from '@/lib/seed';
+import type { Gem } from '@/lib/types';
 
 // Animation Variants
 const staggerContainer = {
@@ -56,16 +58,41 @@ const BACKGROUND_IMAGES = [
 ];
 
 export default function LandingPage() {
-  const [currentBg, setCurrentBg] = React.useState(0);
+  const [currentBg, setCurrentBg] = useState(0);
+  const [gems, setGems] = useState<Gem[]>([]);
+  const [loading, setLoading] = useState(true);
   const { scrollY } = useScroll();
   const heroY = useTransform(scrollY, [0, 500], [0, 150]);
   const heroOpacity = useTransform(scrollY, [0, 300], [1, 0]);
 
-  React.useEffect(() => {
+  useEffect(() => {
     const timer = setInterval(() => {
       setCurrentBg((prev) => (prev + 1) % BACKGROUND_IMAGES.length);
-    }, 6000); // Slower, more cinematic transition
+    }, 6000);
     return () => clearInterval(timer);
+  }, []);
+
+  useEffect(() => {
+    async function fetchGems() {
+      try {
+        const q = query(
+          collection(db, 'gems'),
+          orderBy('rating', 'desc'),
+          limit(6)
+        );
+        const querySnapshot = await getDocs(q);
+        const fetchedGems = querySnapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        })) as Gem[];
+        setGems(fetchedGems);
+      } catch (error) {
+        console.error("Error fetching gems:", error);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchGems();
   }, []);
 
   return (
@@ -182,7 +209,7 @@ export default function LandingPage() {
 
           {/* Horizontal Scroll Snap Container */}
           <div 
-            className="flex gap-6 overflow-x-auto pb-8 snap-x snap-mandatory scrollbar-hide -mx-4 px-4 lg:mx-0 lg:px-0"
+            className="flex gap-6 overflow-x-auto overflow-y-hidden pb-8 snap-x snap-mandatory scrollbar-hide -mx-4 px-4 lg:mx-0 lg:px-0"
             onWheel={(e) => {
               if (e.deltaY !== 0) {
                 e.currentTarget.scrollLeft += e.deltaY;
@@ -190,53 +217,66 @@ export default function LandingPage() {
               }
             }}
           >
-            {SEED_GEMS.slice(0, 5).map((gem, index) => (
-              <motion.div 
-                key={gem.id}
-                initial={{ opacity: 0, x: 50 }}
-                whileInView={{ opacity: 1, x: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.6, delay: index * 0.1, ease: [0.16, 1, 0.3, 1] }}
-                className="snap-center shrink-0 w-[300px] sm:w-[380px] lg:w-[420px]"
-              >
-                <Link href={`/gem/${gem.id}`} className="group block relative h-[480px] rounded-[28px] overflow-hidden">
-                  {/* Dominant Image */}
-                  <motion.div 
-                    className="absolute inset-0 bg-cover bg-center"
-                    style={{ backgroundImage: `url(${gem.photos[0]})` }}
-                    whileHover={{ scale: 1.05 }}
-                    transition={{ duration: 0.8, ease: "easeOut" }}
-                  />
-                  {/* Gradient Overlay for Text */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-90 group-hover:opacity-100 transition-opacity duration-300" />
-                  
-                  {/* Hover Overlay Details */}
-                  <div className="absolute inset-0 bg-brand-ember/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 backdrop-blur-[2px]" />
+            {loading ? (
+              // Loading Skeleton
+              [1, 2, 3].map((i) => (
+                <div key={i} className="snap-center shrink-0 w-[300px] sm:w-[380px] lg:w-[420px] h-[480px] rounded-[28px] bg-neutral-200 dark:bg-neutral-800 animate-pulse flex items-center justify-center">
+                  <Loader2 className="text-neutral-400 animate-spin" size={32} />
+                </div>
+              ))
+            ) : gems.length > 0 ? (
+              gems.map((gem, index) => (
+                <motion.div 
+                  key={gem.id}
+                  initial={{ opacity: 0, x: 50 }}
+                  whileInView={{ opacity: 1, x: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.6, delay: index * 0.1, ease: [0.16, 1, 0.3, 1] }}
+                  className="snap-center shrink-0 w-[300px] sm:w-[380px] lg:w-[420px]"
+                >
+                  <Link href={`/gem/${gem.id}`} className="group block relative h-[480px] rounded-[28px] overflow-hidden">
+                    {/* Dominant Image */}
+                    <motion.div 
+                      className="absolute inset-0 bg-cover bg-center"
+                      style={{ backgroundImage: `url(${gem.photos?.[0] || 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800'})` }}
+                      whileHover={{ scale: 1.05 }}
+                      transition={{ duration: 0.8, ease: "easeOut" }}
+                    />
+                    {/* Gradient Overlay for Text */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-90 group-hover:opacity-100 transition-opacity duration-300" />
+                    
+                    {/* Hover Overlay Details */}
+                    <div className="absolute inset-0 bg-brand-ember/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 backdrop-blur-[2px]" />
 
-                  {/* Content on Image */}
-                  <div className="absolute bottom-0 left-0 right-0 p-8 transform translate-y-4 group-hover:translate-y-0 transition-transform duration-500 ease-out">
-                    <div className="flex gap-2 mb-4">
-                      {gem.vibes.slice(0, 2).map(v => (
-                        <span key={v} className="px-3 py-1 rounded-full text-xs font-semibold backdrop-blur-md bg-white/20 text-white border border-white/20 shadow-sm">
-                          {v}
-                        </span>
-                      ))}
-                    </div>
-                    <h3 className="text-2xl font-semibold text-white mb-2 leading-tight">{gem.title}</h3>
-                    <div className="flex items-center gap-4 text-white/90 text-sm">
-                      <div className="flex items-center gap-1">
-                        <MapPin size={14} />
-                        <span>{gem.location.address.split(',')[0]}</span>
+                    {/* Content on Image */}
+                    <div className="absolute bottom-0 left-0 right-0 p-8 transform translate-y-4 group-hover:translate-y-0 transition-transform duration-500 ease-out">
+                      <div className="flex gap-2 mb-4">
+                        {gem.vibes?.slice(0, 2).map(v => (
+                          <span key={v} className="px-3 py-1 rounded-full text-xs font-semibold backdrop-blur-md bg-white/20 text-white border border-white/20 shadow-sm">
+                            {v}
+                          </span>
+                        ))}
                       </div>
-                      <div className="flex items-center gap-1">
-                        <Star size={14} className="fill-brand-ember text-brand-ember" />
-                        <span className="font-semibold">{gem.rating}</span>
+                      <h3 className="text-2xl font-semibold text-white mb-2 leading-tight">{gem.title}</h3>
+                      <div className="flex items-center gap-4 text-white/90 text-sm">
+                        <div className="flex items-center gap-1">
+                          <MapPin size={14} />
+                          <span>{gem.location?.address?.split(',')[0] || 'Unknown'}</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <Star size={14} className="fill-brand-ember text-brand-ember" />
+                          <span className="font-semibold">{gem.rating || '5.0'}</span>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                </Link>
-              </motion.div>
-            ))}
+                  </Link>
+                </motion.div>
+              ))
+            ) : (
+              <div className="w-full text-center py-20 text-secondary-text">
+                No gems found. Try seeding the database in the admin panel.
+              </div>
+            )}
           </div>
         </div>
       </section>

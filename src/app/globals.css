@@ -264,6 +264,18 @@ body {
   scrollbar-width: none;
 }
 
+/* Aggressive Scrollbar Hide Utility */
+.scrollbar-hide {
+  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none;    /* Firefox */
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none !important; /* Chrome, Safari and Opera */
+  width: 0 !important;
+  height: 0 !important;
+  background: transparent !important;
+}
+
 /* Focus ring */
 .focus-ring:focus-visible {
   outline: 2px solid var(--color-brand-ember);

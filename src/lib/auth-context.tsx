@@ -19,13 +19,22 @@ interface AuthContextType {
   firebaseUser: FirebaseUser | null;
   userData: User | null;
   loading: boolean;
+  /** Signs in a user with email and password */
   signIn: (email: string, password: string) => Promise<void>;
+  /** Registers a new user with role and initial profile data */
   signUp: (email: string, password: string, displayName: string, role: 'traveler' | 'guide') => Promise<void>;
+  /** Authenticates using Google OAuth and creates a user record if first login */
   signInWithGoogle: (role?: 'traveler' | 'guide') => Promise<void>;
+  /** Logs out the current user and clears session data */
   signOut: () => Promise<void>;
+  /** Manually triggers a re-fetch of the user's Firestore data */
   refreshUserData: () => Promise<void>;
 }
 
+/**
+ * Global authentication state provider.
+ * Manages Firebase Auth state and synchronizes it with the 'users' collection in Firestore.
+ */
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {

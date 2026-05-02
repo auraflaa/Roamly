@@ -14,10 +14,21 @@ const firebaseConfig = {
   measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID,
 };
 
-// Initialize Firebase (prevent duplicate apps in dev hot reload)
+// Initialize Firebase as a singleton to prevent duplicate apps during development hot-reloads.
 const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
 
+/**
+ * Authentication instance for Google and Email/Password sign-ins.
+ */
 export const auth = getAuth(app);
+
+/**
+ * Firestore instance targeting the specific 'talk-with-zeno' database.
+ */
 export const db = getFirestore(app, "talk-with-zeno");
+
+/**
+ * Firebase Storage instance for legacy file handling (Hugging Face Buckets preferred for images).
+ */
 export const storage = getStorage(app);
 export default app;
