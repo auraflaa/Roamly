@@ -181,7 +181,15 @@ export default function LandingPage() {
           </motion.div>
 
           {/* Horizontal Scroll Snap Container */}
-          <div className="flex gap-6 overflow-x-auto pb-8 snap-x snap-mandatory scrollbar-hide -mx-4 px-4 lg:mx-0 lg:px-0">
+          <div 
+            className="flex gap-6 overflow-x-auto pb-8 snap-x snap-mandatory scrollbar-hide -mx-4 px-4 lg:mx-0 lg:px-0"
+            onWheel={(e) => {
+              if (e.deltaY !== 0) {
+                e.currentTarget.scrollLeft += e.deltaY;
+                e.preventDefault();
+              }
+            }}
+          >
             {SEED_GEMS.slice(0, 5).map((gem, index) => (
               <motion.div 
                 key={gem.id}

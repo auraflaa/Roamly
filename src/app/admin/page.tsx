@@ -3,11 +3,24 @@
 import React from 'react';
 import { useAuth } from '@/lib/auth-context';
 import { useRouter } from 'next/navigation';
-import { Users, ShieldAlert, Flag, CheckCircle } from 'lucide-react';
+import { Users, ShieldAlert, Flag, CheckCircle, Database } from 'lucide-react';
+import { seedDatabase } from '@/lib/seed';
+import BucketTest from '@/components/debug/BucketTest';
 
 export default function AdminDashboard() {
   const { userData } = useAuth();
   const router = useRouter();
+  const [seeding, setSeeding] = React.useState(false);
+  const [seedMessage, setSeedMessage] = React.useState('');
+
+  const handleSeed = async () => {
+    setSeeding(true);
+    setSeedMessage('Seeding database...');
+    const success = await seedDatabase();
+    setSeeding(false);
+    setSeedMessage(success ? 'Database seeded successfully!' : 'Error seeding database.');
+    setTimeout(() => setSeedMessage(''), 3000);
+  };
 
   // Basic client-side protection for MVP
   if (!userData || userData.role !== 'admin') {
@@ -61,10 +74,35 @@ export default function AdminDashboard() {
         </div>
       </div>
 
-      <div className="rounded-[22px] p-8 text-center" style={{ background: 'var(--card)', border: '1px solid var(--border)' }}>
-        <p className="text-body" style={{ color: 'var(--secondary-text)' }}>
-          Detailed admin views (Verification Queue, Moderation, User Management) will be implemented in the next phase.
-        </p>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+        <div className="rounded-[22px] p-8" style={{ background: 'var(--card)', border: '1px solid var(--border)' }}>
+          <h3 className="text-h3 mb-4" style={{ color: 'var(--primary-text)' }}>System Actions</h3>
+          <div className="flex flex-col gap-4">
+            <button
+              onClick={handleSeed}
+              disabled={seeding}
+              className="flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-neutral-100 dark:bg-neutral-800 text-primary-text font-medium hover:bg-neutral-200 dark:hover:bg-neutral-700 transition-all disabled:opacity-50"
+            >
+              <Database size={18} className={seeding ? 'animate-spin' : ''} />
+              {seeding ? 'Seeding...' : 'Seed Database with Initial Content'}
+            </button>
+            {seedMessage && (
+              <p className={`text-sm font-medium ${seedMessage.includes('Error') ? 'text-red-500' : 'text-green-500'}`}>
+                {seedMessage}
+              </p>
+            )}
+          </div>
+        </div>
+
+        <div className="rounded-[22px]" style={{ background: 'var(--card)', border: '1px solid var(--border)' }}>
+          <BucketTest />
+        </div>
+
+        <div className="rounded-[22px] p-8 flex items-center justify-center text-center" style={{ background: 'var(--card)', border: '1px solid var(--border)' }}>
+          <p className="text-body" style={{ color: 'var(--secondary-text)' }}>
+            Detailed admin views (Verification Queue, Moderation, User Management) will be implemented in the next phase.
+          </p>
+        </div>
       </div>
     </div>
   );

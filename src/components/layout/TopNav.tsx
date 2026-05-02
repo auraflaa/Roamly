@@ -57,13 +57,20 @@ export default function TopNav() {
                 <Link
                   key={href}
                   href={href}
-                  className="px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 hover:bg-brand-ember-15"
+                  className="px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 relative group/link"
                   style={{
                     color: isActive ? 'var(--color-brand-ember)' : 'var(--secondary-text)',
-                    background: isActive ? 'var(--color-brand-ember-15)' : 'transparent',
                   }}
                 >
-                  {label}
+                  <span className="relative z-10">{label}</span>
+                  {isActive && (
+                    <motion.span
+                      layoutId="nav-active"
+                      className="absolute inset-0 rounded-full bg-brand-ember-15 z-0"
+                      transition={{ type: "spring", stiffness: 380, damping: 30 }}
+                    />
+                  )}
+                  <span className="absolute bottom-1 left-4 right-4 h-0.5 bg-brand-ember transform scale-x-0 group-hover/link:scale-x-100 transition-transform duration-300 origin-left" />
                 </Link>
               );
             })}
