@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -19,12 +19,24 @@ export default function TopNav() {
   const { userData, signOut } = useAuth();
   const { theme, toggleTheme } = useThemeStore();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
   const isLanding = pathname === '/';
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 20);
+    };
+    window.addEventListener('scroll', handleScroll);
+    handleScroll(); // Check initial state
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   return (
     <>
       <header
-        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 glass`}
+        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
+          scrolled || !isLanding ? 'bg-white/70 dark:bg-black/70 backdrop-blur-xl border-b border-neutral-200 dark:border-neutral-800 shadow-sm' : 'bg-transparent'
+        }`}
       >
         <div className="max-w-[1280px] mx-auto px-4 lg:px-6 h-16 flex items-center justify-between">
           {/* Logo */}
@@ -232,6 +244,7 @@ export default function TopNav() {
                   </Link>
                 </>
               )}
+            </div>
             </motion.div>
           </motion.div>
         )}
