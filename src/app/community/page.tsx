@@ -11,7 +11,7 @@ import { toggleLike } from '@/app/actions/community';
 import CreatePostModal from '@/components/modals/CreatePostModal';
 
 export default function CommunityPage() {
-  const { user } = useAuth();
+  const { firebaseUser } = useAuth();
   const [posts, setPosts] = useState<CommunityPost[]>([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -34,11 +34,11 @@ export default function CommunityPage() {
   };
 
   const handleLike = async (postId: string) => {
-    if (!user) return;
+    if (!firebaseUser) return;
     const post = posts.find(p => p.id === postId);
     if (!post) return;
 
-    const isLiking = !post.likedBy?.includes(user.uid);
+    const isLiking = !post.likedBy?.includes(firebaseUser.uid);
     
     // Optimistic UI update
     setPosts(prev => prev.map(p => {
@@ -47,14 +47,14 @@ export default function CommunityPage() {
           ...p,
           likes: p.likes + (isLiking ? 1 : -1),
           likedBy: isLiking 
-            ? [...(p.likedBy || []), user.uid] 
-            : (p.likedBy || []).filter(id => id !== user.uid)
+            ? [...(p.likedBy || []), firebaseUser.uid] 
+            : (p.likedBy || []).filter(id => id !== firebaseUser.uid)
         };
       }
       return p;
     }));
 
-    await toggleLike(postId, user.uid, isLiking);
+    await toggleLike(postId, firebaseUser.uid, isLiking);
   };
 
   return (
@@ -99,7 +99,7 @@ export default function CommunityPage() {
               key={post.id} 
               post={post} 
               onLike={() => handleLike(post.id)}
-              isLiked={user ? post.likedBy?.includes(user.uid) : false}
+              isLiked={firebaseUser ? post.likedBy?.includes(firebaseUser.uid) : false}
             />
           ))
         )}

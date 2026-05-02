@@ -3,9 +3,11 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/lib/auth-context';
 import { useRouter } from 'next/navigation';
-import { Calendar, User, Settings, Star, MapPin, Heart, Shield, LogOut, Check, X } from 'lucide-react';
+import { Calendar, User, Settings, Star, MapPin, Heart, Shield, LogOut, Check, X, Camera, Loader2 } from 'lucide-react';
 import { doc, updateDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
+import { getUploadUrl } from '@/app/actions/storage';
+import { BUCKET_URL } from '@/lib/s3';
 
 export default function ProfilePage() {
   const { userData, loading, signOut, refreshUserData } = useAuth();
@@ -14,6 +16,7 @@ export default function ProfilePage() {
   const [isEditingName, setIsEditingName] = useState(false);
   const [editName, setEditName] = useState('');
   const [isSaving, setIsSaving] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
 
   useEffect(() => {
     if (userData?.displayName) {
@@ -64,12 +67,65 @@ export default function ProfilePage() {
     }
   };
 
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Check size (max 2MB)
+    if (file.size > 2 * 1024 * 1024) {
+      alert("Image must be under 2MB");
+      return;
+    }
+
+    setIsUploading(true);
+    try {
+      // 1. Get pre-signed URL
+      const { signedUrl, key } = await getUploadUrl(file.name, file.type, 'avatars');
+
+      // 2. Upload to HF Bucket
+      const uploadRes = await fetch(signedUrl, {
+        method: 'PUT',
+        body: file,
+        headers: { 'Content-Type': file.type }
+      });
+
+      if (!uploadRes.ok) throw new Error("Upload failed");
+
+      // 3. Update Firestore
+      const photoURL = `${BUCKET_URL}/${key}`;
+      await updateDoc(doc(db, 'users', userData.uid), { photoURL });
+      await refreshUserData();
+    } catch (error) {
+      console.error('Avatar upload failed:', error);
+      alert('Failed to upload profile picture.');
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
   return (
     <div className="max-w-[768px] mx-auto px-4 py-6 animate-fade-in">
       {/* Header */}
-      <div className="flex items-center gap-4 mb-8">
-        <div className="w-20 h-20 rounded-full bg-brand-ember flex items-center justify-center text-white text-3xl font-bold flex-shrink-0 shadow-lg shadow-brand-ember/20">
-          {userData.displayName?.[0]?.toUpperCase() || 'U'}
+      <div className="flex items-center gap-6 mb-8">
+        <div className="relative group">
+          <div className="w-24 h-24 rounded-full bg-brand-ember flex items-center justify-center text-white text-3xl font-bold flex-shrink-0 shadow-xl shadow-brand-ember/20 overflow-hidden">
+            {userData.photoURL ? (
+              <img src={userData.photoURL} alt={userData.displayName} className="w-full h-full object-cover" />
+            ) : (
+              userData.displayName?.[0]?.toUpperCase() || 'U'
+            )}
+            
+            {/* Upload Overlay */}
+            <label className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
+              {isUploading ? <Loader2 className="animate-spin text-white" /> : <Camera className="text-white" />}
+              <input type="file" className="hidden" accept="image/*" onChange={handleAvatarUpload} disabled={isUploading} />
+            </label>
+          </div>
+          {isUploading && (
+            <div className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full shadow-lg flex items-center justify-center" style={{ background: 'var(--card)' }}>
+              <Loader2 size={12} className="animate-spin text-brand-ember" />
+            </div>
+          )}
         </div>
         <div>
           <h1 className="text-h1 mb-1" style={{ color: 'var(--primary-text)' }}>{userData.displayName}</h1>
@@ -111,7 +167,7 @@ export default function ProfilePage() {
               </div>
             </div>
           ) : (
-            <button onClick={() => setIsEditingName(true)} className="w-full flex items-center justify-between p-4 transition-colors hover:bg-black/5 dark:hover:bg-white/5" style={{ borderBottom: '1px solid var(--border)' }}>
+            <button onClick={() => setIsEditingName(true)} className="w-full flex items-center justify-between p-4 transition-colors hover:bg-brand-ember/5" style={{ borderBottom: '1px solid var(--border)' }}>
               <div className="flex items-center gap-3">
                 <User size={20} className="text-brand-ember" />
                 <span className="text-sm font-medium" style={{ color: 'var(--primary-text)' }}>Personal Information</span>
@@ -128,7 +184,7 @@ export default function ProfilePage() {
             <span className="text-secondary-text">›</span>
           </button>
 
-          <button className="w-full flex items-center justify-between p-4 transition-colors hover:bg-black/5 dark:hover:bg-white/5">
+          <button className="w-full flex items-center justify-between p-4 transition-colors hover:bg-brand-ember/5">
             <div className="flex items-center gap-3">
               <Settings size={20} className="text-brand-ember" />
               <span className="text-sm font-medium" style={{ color: 'var(--primary-text)' }}>Preferences</span>
@@ -154,7 +210,7 @@ export default function ProfilePage() {
             <span className="text-secondary-text">›</span>
           </button>
 
-          <button className="w-full flex items-center justify-between p-4 transition-colors hover:bg-black/5 dark:hover:bg-white/5">
+          <button className="w-full flex items-center justify-between p-4 transition-colors hover:bg-brand-ember/5">
             <div className="flex items-center gap-3">
               <MapPin size={20} className="text-brand-ember" />
               <span className="text-sm font-medium" style={{ color: 'var(--primary-text)' }}>My Itineraries</span>

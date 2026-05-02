@@ -7,6 +7,10 @@ export const metadata: Metadata = {
   title: 'Roamly — Discover Hidden Gems with Local Insiders',
   description: 'Connect with verified local guides and discover authentic, off-the-beaten-path experiences. Explore hidden gems through the eyes of those who know them best.',
   keywords: ['travel', 'local guides', 'hidden gems', 'authentic experiences', 'travel community'],
+  icons: {
+    icon: '/logos/non-transparent/07_icon_orange_bg.png',
+    apple: '/logos/non-transparent/07_icon_orange_bg.png',
+  },
   openGraph: {
     title: 'Roamly — Discover Hidden Gems with Local Insiders',
     description: 'Connect with verified local guides and discover authentic, off-the-beaten-path experiences.',

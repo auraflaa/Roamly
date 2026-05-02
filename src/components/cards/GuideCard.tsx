@@ -66,13 +66,13 @@ export default function GuideCard({ guide }: GuideCardProps) {
           </div>
           {/* Mode chips */}
           <div className="flex gap-1.5">
-            <span className="px-2 py-0.5 rounded-full text-[10px] font-medium" style={{ background: 'var(--color-mode-self)', color: '#6B5A42' }}>
+            <span className="px-2 py-0.5 rounded-full text-[10px] font-medium" style={{ background: 'var(--mode-self-bg)', color: 'var(--mode-self-text)' }}>
               Self
             </span>
-            <span className="px-2 py-0.5 rounded-full text-[10px] font-medium text-white" style={{ background: 'var(--color-mode-online)' }}>
+            <span className="px-2 py-0.5 rounded-full text-[10px] font-medium" style={{ background: 'var(--mode-online-bg)', color: 'var(--mode-online-text)' }}>
               Online
             </span>
-            <span className="px-2 py-0.5 rounded-full text-[10px] font-medium" style={{ background: 'var(--color-mode-inperson)', color: '#8B5E3C' }}>
+            <span className="px-2 py-0.5 rounded-full text-[10px] font-medium" style={{ background: 'var(--mode-inperson-bg)', color: 'var(--mode-inperson-text)' }}>
               In-Person
             </span>
           </div>

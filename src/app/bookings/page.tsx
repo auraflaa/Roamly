@@ -19,22 +19,22 @@ import {
 import { getTimeAgo } from '@/lib/utils';
 
 export default function BookingsPage() {
-  const { user } = useAuth();
+  const { firebaseUser } = useAuth();
   const [bookings, setBookings] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (user) {
+    if (firebaseUser) {
       loadBookings();
     }
-  }, [user]);
+  }, [firebaseUser]);
 
   const loadBookings = async () => {
     setLoading(true);
     try {
       const q = query(
         collection(db, 'bookings'),
-        where('userId', '==', user.uid),
+        where('userId', '==', firebaseUser?.uid),
         orderBy('createdAt', 'desc')
       );
       const snap = await getDocs(q);
@@ -61,30 +61,30 @@ export default function BookingsPage() {
 
   if (loading) return (
     <div className="max-w-[1280px] mx-auto px-4 py-12 space-y-6">
-      <div className="h-12 w-48 bg-white/5 rounded-full animate-pulse" />
+      <div className="h-12 w-48 bg-surface/50 rounded-full animate-pulse" />
       {Array.from({ length: 3 }).map((_, i) => (
-        <div key={i} className="h-32 bg-white/5 rounded-[32px] animate-pulse" />
+        <div key={i} className="h-32 bg-surface/50 rounded-[32px] animate-pulse" />
       ))}
     </div>
   );
 
   return (
-    <div className="max-w-[1280px] mx-auto px-4 lg:px-6 py-12 animate-fade-in">
+    <div className="max-w-[1280px] mx-auto px-4 lg:px-6 py-12 animate-fade-in pb-32">
       <div className="mb-12">
-        <h1 className="text-4xl lg:text-display font-bold text-dark-primary-text mb-2">My Adventures</h1>
-        <p className="text-dark-secondary-text">Track your upcoming local experiences and match requests.</p>
+        <h1 className="text-4xl lg:text-display font-bold text-primary-text mb-2">My Adventures</h1>
+        <p className="text-secondary-text">Track your upcoming local experiences and match requests.</p>
       </div>
 
       {bookings.length === 0 ? (
-        <div className="text-center py-24 glass rounded-[40px] border border-white/10">
+        <div className="text-center py-24 bg-card rounded-[40px] border border-border">
           <div className="w-20 h-20 bg-brand-ember/10 rounded-full flex items-center justify-center mx-auto mb-6 text-brand-ember">
             <Calendar size={40} />
           </div>
-          <h2 className="text-2xl font-bold text-dark-primary-text mb-2">No bookings yet</h2>
-          <p className="text-dark-secondary-text mb-8 max-w-sm mx-auto">Discover hidden gems and connect with local insiders to start your journey.</p>
+          <h2 className="text-2xl font-bold text-primary-text mb-2">No bookings yet</h2>
+          <p className="text-secondary-text mb-8 max-w-sm mx-auto">Discover hidden gems and connect with local insiders to start your journey.</p>
           <button 
             onClick={() => window.location.href = '/explore'}
-            className="px-8 py-4 rounded-2xl bg-brand-ember text-white font-bold transition-all hover:scale-105"
+            className="px-8 py-4 rounded-2xl bg-brand-ember text-white font-bold transition-all hover:scale-105 shadow-lg shadow-brand-ember/20"
           >
             Explore Gems
           </button>
@@ -94,10 +94,10 @@ export default function BookingsPage() {
           {bookings.map(booking => (
             <div 
               key={booking.id}
-              className="glass rounded-[32px] border border-white/10 p-6 lg:p-8 flex flex-col lg:flex-row gap-8 items-center group transition-all hover:border-brand-ember/30 shadow-xl"
+              className="bg-card rounded-[32px] border border-border p-6 lg:p-8 flex flex-col lg:flex-row gap-8 items-center group transition-all hover:border-brand-ember/30 shadow-xl"
             >
-              {/* Gem Thumbnail Placeholder (Real one would come from gemId fetch) */}
-              <div className="w-full lg:w-48 aspect-square lg:aspect-video rounded-2xl bg-white/5 flex items-center justify-center relative overflow-hidden flex-shrink-0">
+              {/* Gem Thumbnail Placeholder */}
+              <div className="w-full lg:w-48 aspect-square lg:aspect-video rounded-2xl bg-elevated flex items-center justify-center relative overflow-hidden flex-shrink-0 border border-border">
                 <MapPin className="text-brand-ember/20" size={40} />
                 <div className="absolute top-3 left-3 px-3 py-1 rounded-full bg-black/40 backdrop-blur-md text-[10px] font-bold text-white border border-white/10 uppercase tracking-widest">
                   {booking.mode}
@@ -107,17 +107,17 @@ export default function BookingsPage() {
               {/* Info */}
               <div className="flex-1 space-y-2 text-center lg:text-left">
                 <div className="flex flex-wrap items-center justify-center lg:justify-start gap-3 mb-1">
-                  <h3 className="text-2xl font-bold text-dark-primary-text">{booking.gemTitle}</h3>
+                  <h3 className="text-2xl font-bold text-primary-text">{booking.gemTitle}</h3>
                   <span className={`px-4 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest border ${
                     booking.status === 'confirmed' ? 'bg-green-500/10 border-green-500/30 text-green-500' :
                     booking.status === 'pending' ? 'bg-brand-ember/10 border-brand-ember/30 text-brand-ember' :
-                    'bg-white/5 border-white/10 text-dark-secondary-text'
+                    'bg-elevated border-border text-secondary-text'
                   }`}>
                     {booking.status}
                   </span>
                 </div>
                 
-                <div className="flex flex-wrap justify-center lg:justify-start gap-4 text-sm text-dark-secondary-text">
+                <div className="flex flex-wrap justify-center lg:justify-start gap-4 text-sm text-secondary-text">
                   <div className="flex items-center gap-1.5">
                     <User size={16} className="text-brand-ember" />
                     <span>Guide: <b>{booking.guideName}</b></span>
@@ -140,7 +140,7 @@ export default function BookingsPage() {
               {/* Actions */}
               <div className="flex flex-row lg:flex-col gap-3 w-full lg:w-auto">
                 <button 
-                  className="flex-1 lg:flex-none px-6 py-3 rounded-2xl bg-white/5 border border-white/10 text-sm font-bold text-dark-primary-text hover:bg-white/10 transition-all flex items-center justify-center gap-2"
+                  className="flex-1 lg:flex-none px-6 py-3 rounded-2xl bg-elevated/10 border border-border text-sm font-bold text-primary-text hover:bg-elevated/20 transition-all flex items-center justify-center gap-2"
                 >
                   <MessageSquare size={16} />
                   Message

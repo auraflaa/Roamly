@@ -1,7 +1,7 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
 @import "tailwindcss";
 
-@theme inline {
+@theme {
   --color-brand-ember: #E8601A;
   --color-brand-sienna: #C94F10;
   --color-brand-sunrise: #F5A06A;
@@ -17,13 +17,13 @@
   --color-dark-secondary-text: #A3A3A3;
   --color-dark-border: #262626;
 
-  --color-light-bg: #FAFAFA;
-  --color-light-surface: #F5F5F5;
+  --color-light-bg: #FAF9F6;
+  --color-light-surface: #F2F0EA;
   --color-light-card: #FFFFFF;
-  --color-light-elevated: #FFFFFF;
-  --color-light-primary-text: #171717;
-  --color-light-secondary-text: #737373;
-  --color-light-border: #E5E5E5;
+  --color-light-elevated: #EAE7E0;
+  --color-light-primary-text: #1A1A1A;
+  --color-light-secondary-text: #575757;
+  --color-light-border: #E2E0D8;
 
   --color-success-bg: #D4EDDE;
   --color-success-text: #1A4A2E;
@@ -34,9 +34,22 @@
   --color-info-bg: #DBEAFE;
   --color-info-text: #1E40AF;
 
-  --color-mode-self: #F5F0E8;
-  --color-mode-online: #4A7C59;
-  --color-mode-inperson: #FDDCC8;
+  /* Mode Colors (Theme-aware) */
+  --color-mode-self-bg: var(--mode-self-bg);
+  --color-mode-self-text: var(--mode-self-text);
+  --color-mode-online-bg: var(--mode-online-bg);
+  --color-mode-online-text: var(--mode-online-text);
+  --color-mode-inperson-bg: var(--mode-inperson-bg);
+  --color-mode-inperson-text: var(--mode-inperson-text);
+
+  /* Theme-aware aliases */
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-card: var(--card);
+  --color-elevated: var(--elevated);
+  --color-primary-text: var(--primary-text);
+  --color-secondary-text: var(--secondary-text);
+  --color-border: var(--border);
 
   --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
   --font-mono: 'JetBrains Mono', 'Courier New', monospace;
@@ -61,6 +74,13 @@
   --success-text: var(--color-success-text);
   --error-bg: var(--color-error-bg);
   --error-text: var(--color-error-text);
+  
+  --mode-self-bg: #F5F0E8;
+  --mode-self-text: #6B5A42;
+  --mode-online-bg: #4A7C59;
+  --mode-online-text: #FFFFFF;
+  --mode-inperson-bg: #FDDCC8;
+  --mode-inperson-text: #8B5E3C;
 }
 
 [data-theme='dark'] {
@@ -75,6 +95,13 @@
   --success-text: #D4EDDE;
   --error-bg: #8B3030;
   --error-text: #FCCACA;
+
+  --mode-self-bg: #2D2A26;
+  --mode-self-text: #F5F0E8;
+  --mode-online-bg: #2D4C36;
+  --mode-online-text: #D4EDDE;
+  --mode-inperson-bg: #3D2B1F;
+  --mode-inperson-text: #FDDCC8;
 }
 
 
@@ -91,6 +118,14 @@ body {
   transition: background 0.3s ease, color 0.3s ease;
   min-height: 100vh;
   overflow-x: hidden;
+}
+
+body.main-page {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+body.main-page::-webkit-scrollbar {
+  display: none;
 }
 
 /* Scrollbar Styling */

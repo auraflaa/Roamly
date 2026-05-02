@@ -1,75 +1,85 @@
-# Roamly
+# Roamly 🌍
 
-Roamly is a premium, story-driven travel platform designed to connect travelers with authentic, local-insider experiences ("Gems"). Unlike generic travel aggregators, Roamly focuses on human connection and hidden locations that aren't found in traditional guidebooks.
+Roamly is a premium, story-driven travel marketplace designed to connect travelers with authentic, local-insider experiences ("Gems"). 
 
-## Current Stage: MVP (Highly Polished)
+Unlike generic travel aggregators, Roamly is built on a **Behavioral Growth Engine** that prioritizes human connection, trust, and decision clarity to transform casual browsers into committed explorers.
 
-The project is currently in the late MVP stage, featuring a high-fidelity frontend with a cinematic landing experience, fully integrated backend services, and a production-ready image storage system.
+---
 
-### Key Features Implemented
+## 🧠 Behavioral Growth System
 
-*   **Cinematic Landing Experience**: A high-end hero section with parallax motion, staggered animations, and a warm, journal-inspired aesthetic.
-*   **Gem Explorer**: A horizontal-scroll horizontal explorer for "Loved by Locals" featuring image-centric storytelling and micro-interactions.
-*   **Authentication**: Complete Google Authentication flow with real-time profile synchronization and role-based access (User, Guide, Admin).
-*   **Hugging Face Bucket Integration**: Production-ready image storage system using S3-compatible HF Buckets for high-performance image delivery and direct browser uploads.
-*   **Database Architecture**: Real-time Firestore integration for Gems, Guides, and Community Posts with a specialized admin seeding utility.
-*   **Premium UI System**: A custom design system built with Tailwind v4 and Framer Motion, optimized for a warm, human-centered feel.
+Roamly isn't just feature-complete; it's optimized for user behavior:
 
-## Technical Stack
+### 1. Recency-Aware Personalization
+*   **The Engine**: A time-decay algorithm (`src/app/actions/personalization.ts`) that scores user interests.
+*   **The Loop**: Recent interactions (views, saves, bookings) carry more weight, ensuring your "Explore" feed evolves with your current travel mood.
+*   **Curiosity Trigger**: "Today's Pick" on the homepage creates a daily reason to return.
 
-*   **Frontend**: Next.js 15+ (App Router), React 19, Tailwind CSS v4.
-*   **Motion**: Framer Motion.
-*   **Backend/BaaS**: Firebase (Firestore, Auth).
-*   **Storage**: Hugging Face Buckets (S3-compatible).
-*   **Icons**: Lucide React.
-*   **State Management**: Zustand.
+### 2. Decision Momentum (The Funnel)
+*   **Predictive Trust**: Gem pages feature reliability signals (*"94% would book again"*) and "Local Heart" humanization blocks.
+*   **Clarity Roadmap**: A 3-step progress indicator on gem details removes the "What happens next?" anxiety from the booking process.
+*   **Actionable Urgency**: Real-time signals (*"Last slot available"*) trigger momentum without feeling like "dark patterns."
 
-## Getting Started
+---
+
+## 🛠 Technical Architecture
+
+*   **Framework**: Next.js 15+ (App Router, Server Actions).
+*   **Styling**: Tailwind CSS v4 (Custom Design Tokens).
+*   **Motion**: Framer Motion (Orchestrated Staggered Animations).
+*   **Database**: Cloud Firestore (Real-time synchronization).
+*   **Auth**: Firebase Auth (Role-based: Traveler, Guide, Admin).
+*   **Storage**: Hugging Face Buckets (S3-compatible high-performance image delivery).
+*   **State**: Zustand (Local store) + AuthContext (Global session).
+
+---
+
+## 🚀 Getting Started
 
 ### Prerequisites
-
 *   Node.js 18+
-*   Hugging Face Account (for Bucket storage)
 *   Firebase Project
+*   Hugging Face Token (for image storage)
 
 ### Environment Setup
-
-Create a `.env.local` file in the root directory with the following variables:
-
+Create a `.env.local` file:
 ```env
-# Firebase Configuration
-NEXT_PUBLIC_FIREBASE_API_KEY=your_key
-NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=your_domain
-NEXT_PUBLIC_FIREBASE_PROJECT_ID=your_id
-NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=your_bucket
-NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=your_id
-NEXT_PUBLIC_FIREBASE_APP_ID=your_app_id
+# Firebase
+NEXT_PUBLIC_FIREBASE_API_KEY=xxx
+NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=xxx
+NEXT_PUBLIC_FIREBASE_PROJECT_ID=xxx
+NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=xxx
+NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=xxx
+NEXT_PUBLIC_FIREBASE_APP_ID=xxx
 
-# Hugging Face Configuration
-HF_TOKEN=your_fine_grained_token_with_write_access
+# Hugging Face (Storage)
+HF_TOKEN=xxx
 ```
 
 ### Installation
+```bash
+npm install
+npm run dev
+```
 
-1. Clone the repository.
-2. Install dependencies:
-   ```bash
-   npm install
-   ```
-3. Run the development server:
-   ```bash
-   npm run dev
-   ```
+---
 
-## Repository Structure
+## 📂 Codebase Documentation
+We maintain high documentation standards using JSDoc:
+*   **[`/src/app/actions`](file:///src/app/actions)**: Documented server-side logic for personalization and transactions.
+*   **[`/src/components`](file:///src/components)**: Component-level documentation including behavioral intent.
+*   **[`/src/lib`](file:///src/lib)**: Core utilities and Firebase configuration.
 
-*   `/src/app`: Next.js App Router pages and server actions.
-*   `/src/components`: Reusable UI components (Layout, Debug, etc.).
-*   `/src/lib`: Core utility logic (Firebase, S3 config, Auth context).
-*   `/src/app/actions`: Server actions for secure database and storage operations.
+---
 
-## Roadmap (Next Steps)
+## ☁️ Deployment (Vercel)
+Roamly is optimized for **Vercel Free Tier**:
+1.  Connect your GitHub repository to Vercel.
+2.  Add the environment variables from `.env.local`.
+3.  Vercel will automatically detect Next.js and build the project.
+4.  **Note**: Large binary assets (APK/IPA) are excluded from the repository to keep the bundle lightweight.
 
-1.  **Payment Integration**: Implementing Stripe for guide bookings.
-2.  **Advanced Search**: Vector-based search for gems using HF models.
-3.  **Mobile App**: Transitioning the responsive web UI to a native experience.
+---
+
+## 🛡 License
+Internal Project - All Rights Reserved.

@@ -9,12 +9,15 @@ import { SkeletonCard } from '@/components/ui/Skeleton';
 import { VIBES, type Gem } from '@/lib/types';
 import { SEED_GEMS } from '@/lib/seed';
 import { useExploreStore } from '@/lib/store';
+import { useAuth } from '@/lib/auth-context';
+import { Sparkles } from 'lucide-react';
 
 export default function ExplorePage() {
   const [gems, setGems] = useState<Gem[]>([]);
   const [loading, setLoading] = useState(true);
   const [showFilters, setShowFilters] = useState(false);
   const { filters, setVibeFilter, setModeFilter, setSearchQuery, resetFilters } = useExploreStore();
+  const { userData } = useAuth();
 
   useEffect(() => {
     loadGems();
@@ -54,6 +57,14 @@ export default function ExplorePage() {
     }
     if (filters.minRating > 0 && gem.rating < filters.minRating) return false;
     return true;
+  }).sort((a, b) => {
+    // PERSONALIZATION LOGIC: Boost gems matching user's top vibes
+    if (!userData?.vibeAffinities) return 0;
+    
+    const scoreA = a.vibes.reduce((acc, v) => acc + (userData.vibeAffinities?.[v]?.score || 0), 0);
+    const scoreB = b.vibes.reduce((acc, v) => acc + (userData.vibeAffinities?.[v]?.score || 0), 0);
+    
+    return scoreB - scoreA;
   });
 
   const activeFilterCount = filters.vibes.length + (filters.minRating > 0 ? 1 : 0) + (filters.mode ? 1 : 0);
@@ -157,9 +168,9 @@ export default function ExplorePage() {
               {['self', 'online', 'in-person'].map(mode => {
                 const isActive = filters.mode === mode;
                 const colors: Record<string, { bg: string; color: string }> = {
-                  self: { bg: 'var(--color-mode-self)', color: '#6B5A42' },
-                  online: { bg: 'var(--color-mode-online)', color: '#fff' },
-                  'in-person': { bg: 'var(--color-mode-inperson)', color: '#8B5E3C' },
+                  self: { bg: 'var(--mode-self-bg)', color: 'var(--mode-self-text)' },
+                  online: { bg: 'var(--mode-online-bg)', color: 'var(--mode-online-text)' },
+                  'in-person': { bg: 'var(--mode-inperson-bg)', color: 'var(--mode-inperson-text)' },
                 };
                 return (
                   <button
@@ -214,9 +225,10 @@ export default function ExplorePage() {
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 stagger-children">
-          {filteredGems.map(gem => (
-            <GemCard key={gem.id} gem={gem} />
-          ))}
+          {filteredGems.map(gem => {
+            const isPersonalized = userData?.vibeAffinities && gem.vibes.some(v => (userData.vibeAffinities?.[v]?.score || 0) > 5);
+            return <GemCard key={gem.id} gem={gem} personalized={isPersonalized} />;
+          })}
         </div>
       )}
     </div>

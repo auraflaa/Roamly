@@ -17,7 +17,7 @@ export const s3Client = new S3Client({
   endpoint: "https://huggingface.co", // Base endpoint for buckets API
   credentials: {
     accessKeyId: "hf", // Use literal 'hf' as accessKeyId
-    secretAccessKey: process.env.HF_TOKEN, // Your HF token is the secret
+    secretAccessKey: process.env.HF_TOKEN || "", // Your HF token is the secret
   },
 });
 

@@ -10,9 +10,9 @@ import { v4 as uuidv4 } from "uuid";
  * @param fileName Original name of the file
  * @param fileType MIME type of the file
  */
-export async function getUploadUrl(fileName: string, fileType: string) {
+export async function getUploadUrl(fileName: string, fileType: string, folder: string = 'gems') {
   try {
-    const key = `gems/${uuidv4()}-${fileName}`;
+    const key = `${folder}/${uuidv4()}-${fileName}`;
     
     const command = new PutObjectCommand({
       Bucket: BUCKET_NAME,

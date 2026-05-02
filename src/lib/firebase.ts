@@ -1,8 +1,18 @@
+/**
+ * @file firebase.ts
+ * @description Centralized Firebase SDK initialization for Roamly.
+ * Handles Auth, Firestore, and Storage with singleton patterns to support Next.js Fast Refresh.
+ */
+
 import { initializeApp, getApps } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
 
+/**
+ * Firebase Client-Side Configuration.
+ * Values are populated from .env.local during development and Vercel Environment Variables in production.
+ */
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
   authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
@@ -14,21 +24,27 @@ const firebaseConfig = {
   measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID,
 };
 
-// Initialize Firebase as a singleton to prevent duplicate apps during development hot-reloads.
+// Singleton initialization pattern to prevent "Firebase App already exists" errors during Next.js hot-reloading.
 const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
 
 /**
- * Authentication instance for Google and Email/Password sign-ins.
+ * Firebase Authentication instance.
+ * @const {Auth}
  */
 export const auth = getAuth(app);
 
 /**
- * Firestore instance targeting the specific 'talk-with-zeno' database.
+ * Cloud Firestore database instance.
+ * Note: Configured to use the specific "talk-with-zeno" named database.
+ * @const {Firestore}
  */
 export const db = getFirestore(app, "talk-with-zeno");
 
 /**
- * Firebase Storage instance for legacy file handling (Hugging Face Buckets preferred for images).
+ * Cloud Storage instance.
+ * Primarily used for profile avatars and gem images.
+ * @const {FirebaseStorage}
  */
 export const storage = getStorage(app);
+
 export default app;

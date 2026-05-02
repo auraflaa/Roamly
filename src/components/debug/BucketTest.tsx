@@ -53,7 +53,7 @@ export default function BucketTest() {
   };
 
   return (
-    <div className="p-8 rounded-[28px] bg-white dark:bg-[#1A1A1A] border border-neutral-200 dark:border-neutral-800 shadow-xl max-w-md mx-auto">
+    <div className="p-8 rounded-[28px] shadow-xl max-w-md mx-auto" style={{ background: 'var(--card)', border: '1px solid var(--border)' }}>
       <div className="flex items-center gap-3 mb-6">
         <div className="w-10 h-10 rounded-xl bg-brand-ember/10 flex items-center justify-center">
           <Camera className="text-brand-ember" size={20} />

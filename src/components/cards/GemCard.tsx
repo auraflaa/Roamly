@@ -1,24 +1,45 @@
+/**
+ * @file GemCard.tsx
+ * @description A high-end, image-dominant card component for displaying travel 'gems'.
+ * Supports interaction tracking via personalized badges and hover animations.
+ */
+
 'use client';
 
 import React from 'react';
 import Link from 'next/link';
-import { Star, Heart, MapPin, Clock } from 'lucide-react';
+import { Star, Heart, MapPin, Clock, Sparkles } from 'lucide-react';
 import type { Gem } from '@/lib/types';
 
+/**
+ * @interface GemCardProps
+ * @property {Gem} gem - The complete gem data object.
+ * @property {(id: string) => void} [onSave] - Optional callback for saving to wishlist.
+ * @property {boolean} [isSaved] - Current saved state for UI rendering.
+ * @property {boolean} [personalized] - If true, displays a 'For You' recognition badge.
+ */
 interface GemCardProps {
   gem: Gem;
   onSave?: (id: string) => void;
   isSaved?: boolean;
+  personalized?: boolean;
 }
 
-export default function GemCard({ gem, onSave, isSaved }: GemCardProps) {
+/**
+ * GemCard Component
+ * Renders a visual preview of a hidden gem with title, rating, price, and vibe tags.
+ * 
+ * @component
+ * @param {GemCardProps} props - Component properties.
+ */
+export default function GemCard({ gem, onSave, isSaved, personalized }: GemCardProps) {
   return (
     <Link href={`/gem/${gem.id}`} className="group block">
       <div
         className="rounded-[22px] overflow-hidden card-hover"
         style={{ background: 'var(--card)', border: '1px solid var(--border)' }}
       >
-        {/* Image */}
+        {/* Image Section */}
         <div className="relative h-[160px] lg:h-[220px] overflow-hidden">
           <div
             className="w-full h-full bg-cover bg-center transition-transform duration-500 group-hover:scale-105"
@@ -27,10 +48,17 @@ export default function GemCard({ gem, onSave, isSaved }: GemCardProps) {
               backgroundColor: 'var(--surface)',
             }}
           />
-          {/* Gradient overlay */}
+          {/* Gradient overlay for text legibility */}
           <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
 
-          {/* Save button */}
+          {/* Personalized Badge: Behavioral Recognition */}
+          {personalized && (
+            <div className="absolute top-3 left-3 px-2 py-1 rounded-md bg-brand-ember text-[9px] font-black text-white uppercase tracking-tighter shadow-lg flex items-center gap-1">
+              <Sparkles size={10} className="fill-white" /> For You
+            </div>
+          )}
+
+          {/* Quick Save Action */}
           {onSave && (
             <button
               onClick={(e) => { e.preventDefault(); e.stopPropagation(); onSave(gem.id); }}
@@ -43,7 +71,7 @@ export default function GemCard({ gem, onSave, isSaved }: GemCardProps) {
             </button>
           )}
 
-          {/* Vibe tags */}
+          {/* Vibe Tags: Categorical preview */}
           <div className="absolute bottom-3 left-3 flex gap-1.5">
             {gem.vibes.slice(0, 2).map((vibe) => (
               <span
@@ -61,13 +89,14 @@ export default function GemCard({ gem, onSave, isSaved }: GemCardProps) {
           </div>
         </div>
 
-        {/* Content */}
+        {/* Text Content Section */}
         <div className="p-4">
           <h3 className="text-h3 mb-1 line-clamp-1" style={{ color: 'var(--primary-text)' }}>
             {gem.title}
           </h3>
 
           <div className="flex items-center gap-3 mb-2">
+            {/* Rating Summary */}
             <div className="flex items-center gap-1">
               <Star size={13} className="fill-brand-ember text-brand-ember" />
               <span className="text-caption font-semibold" style={{ color: 'var(--primary-text)' }}>
@@ -77,6 +106,7 @@ export default function GemCard({ gem, onSave, isSaved }: GemCardProps) {
                 ({gem.reviewCount})
               </span>
             </div>
+            {/* Geographical Context */}
             {gem.location?.address && (
               <div className="flex items-center gap-1">
                 <MapPin size={11} style={{ color: 'var(--secondary-text)' }} />
@@ -88,6 +118,7 @@ export default function GemCard({ gem, onSave, isSaved }: GemCardProps) {
           </div>
 
           <div className="flex items-center justify-between">
+            {/* Contextual Cues: Time of Day */}
             {gem.bestTime && (
               <div className="flex items-center gap-1">
                 <Clock size={11} style={{ color: 'var(--secondary-text)' }} />
@@ -96,6 +127,7 @@ export default function GemCard({ gem, onSave, isSaved }: GemCardProps) {
                 </span>
               </div>
             )}
+            {/* Pricing (Stored in cents) */}
             {gem.price && gem.price > 0 && (
               <span className="text-label text-brand-ember font-semibold">
                 ${(gem.price / 100).toFixed(0)}

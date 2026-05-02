@@ -15,6 +15,7 @@ export interface User {
   isFemale?: boolean;
   locationEnabled?: boolean;
   fcmToken?: string;
+  vibeAffinities?: Record<string, { score: number; lastUpdated: string }>;
 }
 
 export interface Guide {
@@ -61,6 +62,7 @@ export interface Gem {
     lat: number;
     lng: number;
     address: string;
+    city: string;
     nearestLandmark: string;
   };
   vibes: string[];
@@ -75,6 +77,11 @@ export interface Gem {
   reviewCount: number;
   createdAt: Timestamp;
   price?: number;
+  localHeart?: {
+    note: string;
+    guideName: string;
+    guideId: string;
+  };
 }
 
 export interface Booking {

@@ -1,6 +1,6 @@
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
-# dependencies
+# Dependencies
 /node_modules
 /.pnp
 .pnp.*
@@ -10,40 +10,51 @@
 !.yarn/releases
 !.yarn/versions
 
-# testing
-/coverage
-
-# next.js
+# Next.js Build Output
 /.next/
 /out/
-
-# production
 /build
 
-# misc
-.DS_Store
-*.pem
+# Testing & Coverage
+/coverage
+.nyc_output
 
-# debug
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-.pnpm-debug.log*
-
-# env files
+# Environment Secrets (CRITICAL)
 .env
 .env.local
 .env.development.local
 .env.test.local
 .env.production.local
-
-# Allow committing the example file
 !.env.example
 
-# project specific
+# OS Metadata
+.DS_Store
+Thumbs.db
+*.pem
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+*.log
+
+# Large Binary Assets & Mobile Builds (Vercel-Friendly)
+/public/downloads/*.apk
+/public/downloads/*.ipa
+*.zip
+*.tar.gz
+
+# Local Tooling & AI Specs
 firebase.txt
 roamly_llm_build_spec.md
-*.log
 .hf/
 .python-version
 .venv/
+.gemini/
+.claude/
+CLAUDE.md
+
+# Branding Assets (Source Folders)
+/Roamly_Logo_PNGs/
+/Roamly_Logo_Transparent_PNGs/

@@ -12,35 +12,58 @@ interface CommunityPostCardProps {
 }
 
 export default function CommunityPostCard({ post, onLike, isLiked }: CommunityPostCardProps) {
+  const [isExpanded, setIsExpanded] = React.useState(false);
   const timeAgo = post.createdAt?.toDate ? getTimeAgo(post.createdAt.toDate()) : '';
+
+  const renderDescription = (text: string) => {
+    if (!text) return null;
+    const parts = text.split(/(@[\w-]+)/g);
+    return parts.map((part, i) => {
+      if (part.startsWith('@')) {
+        return <span key={i} className="font-bold text-brand-ember cursor-pointer hover:underline">{part}</span>;
+      }
+      return part;
+    });
+  };
+
+  const isLong = post.description?.length > 280;
+  const displayDescription = isLong && !isExpanded 
+    ? post.description.slice(0, 280) + '...' 
+    : post.description;
 
   return (
     <div
-      className="rounded-[16px] overflow-hidden animate-fade-in"
-      style={{ background: 'var(--card)', border: '1px solid var(--border)' }}
+      className="rounded-[24px] overflow-hidden animate-fade-in bg-card border border-border shadow-sm hover:shadow-md transition-all"
     >
       {/* Author */}
-      <div className="flex items-center gap-3 p-4 pb-2">
-        <div className="w-9 h-9 rounded-full bg-brand-ember flex items-center justify-center text-white text-xs font-bold">
+      <div className="flex items-center gap-3 p-5 pb-3">
+        <div className="w-10 h-10 rounded-full bg-brand-ember flex items-center justify-center text-white text-sm font-bold shadow-sm">
           {post.authorName?.[0]?.toUpperCase() || 'U'}
         </div>
         <div className="flex-1">
-          <p className="text-sm font-medium" style={{ color: 'var(--primary-text)' }}>
-            {post.authorName || 'Anonymous'}
-          </p>
-          <p className="text-caption" style={{ color: 'var(--secondary-text)' }}>{timeAgo}</p>
+          <div className="flex items-center gap-2">
+             <p className="text-sm font-bold text-primary-text">
+               {post.authorName || 'Anonymous'}
+             </p>
+             {post.authorId?.startsWith('guide-') && (
+               <span className="px-1.5 py-0.5 rounded-md bg-brand-ember/10 text-[9px] font-black text-brand-ember uppercase tracking-tighter">
+                 Guide
+               </span>
+             )}
+          </div>
+          <p className="text-caption text-secondary-text">{timeAgo}</p>
         </div>
       </div>
 
       {/* Photos */}
       {post.photos.length > 0 && (
-        <div className="px-4 pb-2">
-          <div className={`grid gap-1 rounded-xl overflow-hidden ${post.photos.length > 1 ? 'grid-cols-2' : ''}`}>
+        <div className="px-5 pb-3">
+          <div className={`grid gap-1.5 rounded-2xl overflow-hidden ${post.photos.length > 1 ? 'grid-cols-2' : ''}`}>
             {post.photos.slice(0, 4).map((photo, i) => (
               <div
                 key={i}
-                className="aspect-[4/3] bg-cover bg-center"
-                style={{ backgroundImage: `url(${photo})`, backgroundColor: 'var(--surface)' }}
+                className="aspect-[4/3] bg-cover bg-center bg-surface"
+                style={{ backgroundImage: `url(${photo})` }}
               />
             ))}
           </div>
@@ -48,20 +71,27 @@ export default function CommunityPostCard({ post, onLike, isLiked }: CommunityPo
       )}
 
       {/* Content */}
-      <div className="px-4 py-2">
-        <h4 className="text-h3 mb-1" style={{ color: 'var(--primary-text)' }}>{post.title}</h4>
-        <p className="text-body line-clamp-3" style={{ color: 'var(--secondary-text)' }}>
-          {post.description}
-        </p>
+      <div className="px-5 py-3">
+        <h4 className="text-xl font-bold mb-3 text-primary-text leading-tight">{post.title}</h4>
+        <div className="text-body-lg text-secondary-text whitespace-pre-wrap leading-relaxed">
+          {renderDescription(displayDescription)}
+          {isLong && (
+            <button 
+              onClick={() => setIsExpanded(!isExpanded)}
+              className="ml-2 text-brand-ember font-bold hover:underline"
+            >
+              {isExpanded ? 'Read less' : 'Read more'}
+            </button>
+          )}
+        </div>
         {post.vibeTags.length > 0 && (
-          <div className="flex gap-1.5 mt-2 flex-wrap">
+          <div className="flex gap-2 mt-4 flex-wrap">
             {post.vibeTags.map(tag => (
               <span
                 key={tag}
-                className="px-2 py-0.5 rounded-full text-[10px] font-medium"
-                style={{ background: 'var(--color-brand-ember-15)', color: 'var(--color-brand-ember)' }}
+                className="px-3 py-1 rounded-full text-[11px] font-bold bg-brand-ember/10 text-brand-ember"
               >
-                {tag}
+                #{tag}
               </span>
             ))}
           </div>

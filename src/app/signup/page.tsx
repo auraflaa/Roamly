@@ -4,6 +4,7 @@ import React, { useState, Suspense } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Eye, EyeOff, Mail, Lock, User, Compass, Map } from 'lucide-react';
+import Image from 'next/image';
 import { useAuth } from '@/lib/auth-context';
 
 function SignupForm() {
@@ -64,8 +65,13 @@ function SignupForm() {
       <div className="relative w-full max-w-md animate-slide-up">
         <div className="text-center mb-8">
           <Link href="/" className="inline-flex items-center gap-2 mb-4">
-            <div className="w-10 h-10 rounded-xl bg-brand-ember flex items-center justify-center text-white font-bold">
-              R
+            <div className="relative w-10 h-10 rounded-xl overflow-hidden shadow-lg shadow-brand-ember/20">
+              <Image 
+                src="/logos/non-transparent/07_icon_orange_bg.png" 
+                alt="Roamly Icon" 
+                fill
+                className="object-contain"
+              />
             </div>
             <span className="text-h1 font-semibold" style={{ color: 'var(--primary-text)' }}>Roamly</span>
           </Link>

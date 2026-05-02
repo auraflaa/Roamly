@@ -54,3 +54,28 @@ export async function toggleLike(postId: string, userId: string, isLiking: boole
     return { success: false, error: error.message };
   }
 }
+
+/**
+ * Adds a comment to a post
+ */
+export async function addComment(postId: string, userId: string, userName: string, text: string) {
+  try {
+    const commentsCol = collection(db, 'community_posts', postId, 'comments');
+    await addDoc(commentsCol, {
+      userId,
+      userName,
+      text,
+      createdAt: serverTimestamp()
+    });
+
+    const postRef = doc(db, 'community_posts', postId);
+    await updateDoc(postRef, {
+      commentCount: increment(1)
+    });
+
+    return { success: true };
+  } catch (error: any) {
+    console.error('Add comment failed:', error);
+    return { success: false, error: error.message };
+  }
+}

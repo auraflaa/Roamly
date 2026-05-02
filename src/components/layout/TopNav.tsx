@@ -4,7 +4,8 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Sun, Moon, Menu, X, LogOut, Shield, Compass } from 'lucide-react';
+import { Sun, Moon, Menu, X, LogOut, Shield } from 'lucide-react';
+import Image from 'next/image';
 import { useAuth } from '@/lib/auth-context';
 import { useThemeStore } from '@/lib/store';
 
@@ -31,20 +32,32 @@ export default function TopNav() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+  const isTransparent = isLanding && !scrolled;
+
   return (
     <>
       <header
         className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
-          scrolled || !isLanding ? 'bg-white/70 dark:bg-black/70 backdrop-blur-xl border-b border-neutral-200 dark:border-neutral-800 shadow-sm' : 'bg-transparent'
+          !isTransparent 
+            ? 'bg-surface/80 backdrop-blur-xl border-b border-border shadow-sm' 
+            : 'bg-transparent'
         }`}
       >
         <div className="max-w-[1280px] mx-auto px-4 lg:px-6 h-16 flex items-center justify-between">
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2.5 group">
-            <div className="relative flex items-center justify-center w-9 h-9 rounded-xl bg-gradient-to-br from-brand-ember to-brand-sienna shadow-lg shadow-brand-ember/20 group-hover:scale-105 transition-transform duration-300">
-              <Compass size={20} className="text-white" strokeWidth={2.5} />
+            <div className="relative w-9 h-9 rounded-xl overflow-hidden group-hover:scale-105 transition-transform duration-300">
+              <Image 
+                src="/logos/non-transparent/07_icon_orange_bg.png" 
+                alt="Roamly Icon" 
+                fill
+                className="object-contain"
+              />
             </div>
-            <span className="text-h3 font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white to-neutral-400" style={{ color: 'var(--primary-text)' }}>
+            <span 
+              className={`text-h3 font-bold tracking-tight transition-colors duration-300`}
+              style={{ color: isTransparent ? 'white' : 'var(--primary-text)' }}
+            >
               Roamly
             </span>
           </Link>
@@ -57,16 +70,18 @@ export default function TopNav() {
                 <Link
                   key={href}
                   href={href}
-                  className="px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 relative group/link"
+                  className="px-4 py-2 rounded-full text-sm font-bold transition-all duration-300 relative group/link"
                   style={{
-                    color: isActive ? 'var(--color-brand-ember)' : 'var(--secondary-text)',
+                    color: isActive 
+                      ? 'var(--color-brand-ember)' 
+                      : (isTransparent ? 'rgba(255,255,255,0.8)' : 'var(--secondary-text)'),
                   }}
                 >
                   <span className="relative z-10">{label}</span>
                   {isActive && (
                     <motion.span
                       layoutId="nav-active"
-                      className="absolute inset-0 rounded-full bg-brand-ember-15 z-0"
+                      className="absolute inset-0 rounded-full bg-brand-ember/10 z-0"
                       transition={{ type: "spring", stiffness: 380, damping: 30 }}
                     />
                   )}
@@ -80,8 +95,8 @@ export default function TopNav() {
           <div className="flex items-center gap-3">
             <button
               onClick={toggleTheme}
-              className="p-2 rounded-full transition-all duration-200 hover:bg-brand-ember-15"
-              style={{ color: 'var(--secondary-text)' }}
+              className="p-2 rounded-full transition-all duration-300 hover:bg-brand-ember/10"
+              style={{ color: isTransparent ? 'white' : 'var(--secondary-text)' }}
               aria-label="Toggle theme"
             >
               {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
@@ -92,8 +107,8 @@ export default function TopNav() {
                 {userData.role === 'admin' && (
                   <Link
                     href="/admin"
-                    className="p-2 rounded-full transition-all hover:bg-brand-ember-15"
-                    style={{ color: 'var(--secondary-text)' }}
+                    className="p-2 rounded-full transition-all hover:bg-brand-ember/10"
+                    style={{ color: isTransparent ? 'white' : 'var(--secondary-text)' }}
                   >
                     <Shield size={18} />
                   </Link>
@@ -101,22 +116,26 @@ export default function TopNav() {
                 {userData.role === 'guide' && (
                   <Link
                     href="/guide-dashboard"
-                    className="text-sm font-medium px-4 py-2 rounded-full transition-all hover:bg-brand-ember-15"
-                    style={{ color: 'var(--secondary-text)' }}
+                    className="text-sm font-bold px-4 py-2 rounded-full transition-all hover:bg-brand-ember/10"
+                    style={{ color: isTransparent ? 'white' : 'var(--secondary-text)' }}
                   >
                     Dashboard
                   </Link>
                 )}
                 <Link
                   href="/profile"
-                  className="w-8 h-8 rounded-full bg-brand-ember flex items-center justify-center text-white text-xs font-bold hover:scale-105 transition-transform"
+                  className="w-8 h-8 rounded-full bg-brand-ember flex items-center justify-center text-white text-xs font-bold hover:scale-105 transition-transform overflow-hidden shadow-sm"
                 >
-                  {userData.displayName?.[0]?.toUpperCase() || 'U'}
+                  {userData.photoURL ? (
+                    <img src={userData.photoURL} alt={userData.displayName} className="w-full h-full object-cover" />
+                  ) : (
+                    userData.displayName?.[0]?.toUpperCase() || 'U'
+                  )}
                 </Link>
                 <button
                   onClick={signOut}
-                  className="p-2 rounded-full transition-all hover:bg-brand-ember-15"
-                  style={{ color: 'var(--secondary-text)' }}
+                  className="p-2 rounded-full transition-all hover:bg-brand-ember/10"
+                  style={{ color: isTransparent ? 'white' : 'var(--secondary-text)' }}
                 >
                   <LogOut size={18} />
                 </button>
@@ -125,14 +144,14 @@ export default function TopNav() {
               <div className="hidden lg:flex items-center gap-2">
                 <Link
                   href="/login"
-                  className="text-sm font-medium px-4 py-2 rounded-full transition-all hover:bg-brand-ember-15"
-                  style={{ color: 'var(--secondary-text)' }}
+                  className="text-sm font-bold px-4 py-2 rounded-full transition-all hover:bg-brand-ember/10"
+                  style={{ color: isTransparent ? 'white' : 'var(--secondary-text)' }}
                 >
                   Log in
                 </Link>
                 <Link
                   href="/signup"
-                  className="text-sm font-medium px-5 py-2 rounded-full bg-brand-ember text-white hover:bg-brand-sienna transition-colors"
+                  className="text-sm font-bold px-5 py-2 rounded-full bg-brand-ember text-white hover:bg-brand-sienna transition-all shadow-md shadow-brand-ember/20"
                 >
                   Sign Up
                 </Link>
@@ -142,8 +161,8 @@ export default function TopNav() {
             {/* Mobile menu button */}
             <button
               onClick={() => setMobileOpen(!mobileOpen)}
-              className="lg:hidden p-2 rounded-full transition-all hover:bg-brand-ember-15"
-              style={{ color: 'var(--secondary-text)' }}
+              className="lg:hidden p-2 rounded-full transition-all hover:bg-brand-ember/10"
+              style={{ color: isTransparent ? 'white' : 'var(--secondary-text)' }}
               aria-label="Menu"
             >
               {mobileOpen ? <X size={20} /> : <Menu size={20} />}
