@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation';
 import { useThemeStore } from '@/lib/store';
 import BottomNav from './BottomNav';
 import TopNav from './TopNav';
+import AppDownloadBanner from '../notifications/AppDownloadBanner';
 
 interface AppShellProps {
   children: React.ReactNode;
@@ -33,7 +34,12 @@ export default function AppShell({ children }: AppShellProps) {
       <main className={`flex-1 ${!isAuthPage && !isLandingPage ? 'pt-16' : ''} ${!isAuthPage && !isAdminPage ? 'pb-20 lg:pb-0' : ''}`}>
         {children}
       </main>
-      {!isAuthPage && !isAdminPage && <BottomNav />}
+      {!isAuthPage && !isAdminPage && (
+        <>
+          <BottomNav />
+          <AppDownloadBanner />
+        </>
+      )}
     </div>
   );
 }

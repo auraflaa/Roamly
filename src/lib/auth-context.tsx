@@ -43,11 +43,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   const fetchUserData = async (uid: string) => {
+    // Try to get from cache first for instant UI response
+    const cached = localStorage.getItem(`roamly_user_${uid}`);
+    if (cached) {
+      const parsed = JSON.parse(cached);
+      setUserData(parsed);
+    }
+
     const userDoc = await getDoc(doc(db, 'users', uid));
     if (userDoc.exists()) {
-      setUserData(userDoc.data() as User);
+      const data = userDoc.data() as User;
+      setUserData(data);
+      // Update cache with fresh data
+      localStorage.setItem(`roamly_user_${uid}`, JSON.stringify(data));
+      return data;
     }
-    return userDoc.exists() ? (userDoc.data() as User) : null;
+    return null;
   };
 
   useEffect(() => {
@@ -57,6 +68,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         await fetchUserData(user.uid);
       } else {
         setUserData(null);
+        // Clean up caches if we wanted to be strict, but keeping them for now
       }
       setLoading(false);
     });

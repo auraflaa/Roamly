@@ -6,8 +6,11 @@ const SEED_GEMS = [
     id: 'gem-1',
     title: 'Sunrise Fort Trail Hidden Viewpoint',
     description: 'A breathtaking sunrise spot only known to locals, perched on an ancient fort wall that overlooks the entire valley. The golden hour here paints the landscape in amber and rose, with mist rolling through the ravines below. Best visited during autumn when the air is crisp and the skies are clear.',
-    photos: ['https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800', 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=800'],
-    location: { lat: 26.9124, lng: 75.7873, address: 'Old Fort, Jaipur', nearestLandmark: 'Nahargarh Fort' },
+    photos: [
+      'https://images.unsplash.com/photo-1477959858617-67f85cf4f1df?auto=format&fit=crop&q=80&w=1000',
+      'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&q=80&w=1000'
+    ],
+    location: { lat: 26.9124, lng: 75.7873, address: 'Old Fort, Jaipur', city: 'Jaipur', nearestLandmark: 'Nahargarh Fort' },
     vibes: ['Adventure', 'Nature'],
     bestTime: { timeOfDay: 'Sunrise', season: 'Autumn' },
     whatToBring: ['Water bottle', 'Camera', 'Comfortable shoes'],
@@ -24,8 +27,11 @@ const SEED_GEMS = [
     id: 'gem-2',
     title: 'Secret Spice Market Alley',
     description: 'Tucked behind the main bazaar, this narrow alley is where local chefs buy their spices. The air is thick with the scent of cardamom, turmeric, and fresh cinnamon. A 200-year-old family-run stall here still grinds spices by hand using traditional stone mills. Taste rare blends you won\'t find anywhere else.',
-    photos: ['https://images.unsplash.com/photo-1596040033229-a9821ebd058d?w=800', 'https://images.unsplash.com/photo-1532336414038-cf19250c5757?w=800'],
-    location: { lat: 26.9236, lng: 75.8237, address: 'Johari Bazaar, Jaipur', nearestLandmark: 'Hawa Mahal' },
+    photos: [
+      'https://images.unsplash.com/photo-1596040033229-a9821ebd058d?auto=format&fit=crop&q=80&w=1000',
+      'https://images.unsplash.com/photo-1532336414038-cf19250c5757?auto=format&fit=crop&q=80&w=1000'
+    ],
+    location: { lat: 26.9236, lng: 75.8237, address: 'Johari Bazaar, Jaipur', city: 'Jaipur', nearestLandmark: 'Hawa Mahal' },
     vibes: ['Food', 'Culture'],
     bestTime: { timeOfDay: 'Morning', season: 'Any' },
     whatToBring: ['Cash', 'Shopping bags', 'Curious palate'],
@@ -42,8 +48,11 @@ const SEED_GEMS = [
     id: 'gem-3',
     title: 'Moonlit Rooftop Temple Meditation',
     description: 'An ancient rooftop temple accessible through a hidden staircase in the old quarter. During full moon nights, local monks lead silent meditation sessions open to visitors. The panoramic view of the sleeping city under moonlight is absolutely transformative. Arrive 30 minutes early for the best spot.',
-    photos: ['https://images.unsplash.com/photo-1545389336-cf090694435e?w=800', 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=800'],
-    location: { lat: 27.1751, lng: 78.0421, address: 'Old Quarter, Agra', nearestLandmark: 'Near Taj Mahal East Gate' },
+    photos: [
+      'https://images.unsplash.com/photo-1545389336-cf090694435e?auto=format&fit=crop&q=80&w=1000',
+      'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=1000'
+    ],
+    location: { lat: 27.1751, lng: 78.0421, address: 'Old Quarter, Agra', city: 'Agra', nearestLandmark: 'Near Taj Mahal East Gate' },
     vibes: ['Spiritual', 'Relaxation'],
     bestTime: { timeOfDay: 'Night', season: 'Full Moon' },
     whatToBring: ['Meditation cushion', 'Light shawl', 'Open mind'],
@@ -60,8 +69,11 @@ const SEED_GEMS = [
     id: 'gem-4',
     title: 'Underground Art Gallery District',
     description: 'Beneath an old textile factory lies a thriving underground art scene. Local and international artists display their work in converted basement galleries. Street art murals cover the approach walls, and every second Saturday hosts a live art jam session with music and food trucks.',
-    photos: ['https://images.unsplash.com/photo-1561214115-f2f134cc4912?w=800', 'https://images.unsplash.com/photo-1578301978693-85fa9fd0c9d4?w=800'],
-    location: { lat: 19.0760, lng: 72.8777, address: 'Worli Art District, Mumbai', nearestLandmark: 'Lower Parel Station' },
+    photos: [
+      'https://images.unsplash.com/photo-1561214115-f2f134cc4912?auto=format&fit=crop&q=80&w=1000',
+      'https://images.unsplash.com/photo-1578301978693-85fa9fd0c9d4?auto=format&fit=crop&q=80&w=1000'
+    ],
+    location: { lat: 19.0760, lng: 72.8777, address: 'Worli Art District, Mumbai', city: 'Mumbai', nearestLandmark: 'Lower Parel Station' },
     vibes: ['Art', 'Culture'],
     bestTime: { timeOfDay: 'Evening', season: 'Any' },
     whatToBring: ['Camera', 'Notebook', 'Art appreciation'],
@@ -78,8 +90,11 @@ const SEED_GEMS = [
     id: 'gem-5',
     title: 'Dawn Fisherman Beach Walk',
     description: 'Join local fishermen at dawn as they pull in their morning catch on this quiet stretch of beach. Watch traditional fishing techniques passed down for generations. The fish market sets up right on the sand—buy the freshest seafood imaginable and have it cooked at a nearby shack.',
-    photos: ['https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=800', 'https://images.unsplash.com/photo-1519046904884-53103b34b206?w=800'],
-    location: { lat: 15.2993, lng: 74.1240, address: 'Benaulim Beach, Goa', nearestLandmark: 'Benaulim Church' },
+    photos: [
+      'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&q=80&w=1000',
+      'https://images.unsplash.com/photo-1519046904884-53103b34b206?auto=format&fit=crop&q=80&w=1000'
+    ],
+    location: { lat: 15.2993, lng: 74.1240, address: 'Benaulim Beach, Goa', city: 'Goa', nearestLandmark: 'Benaulim Church' },
     vibes: ['Nature', 'Food', 'Culture'],
     bestTime: { timeOfDay: 'Dawn', season: 'Winter' },
     whatToBring: ['Sunscreen', 'Cash', 'Early wake-up alarm'],
@@ -96,8 +111,11 @@ const SEED_GEMS = [
     id: 'gem-6',
     title: 'Heritage Stepwell Photography Tour',
     description: 'Explore a magnificent 11th-century stepwell that few tourists know about. The geometric patterns of the descending stairs create incredible photography opportunities. At noon, the sunlight hits the water at a perfect angle, creating a mirror-like reflection of the intricate carvings above.',
-    photos: ['https://images.unsplash.com/photo-1524492412937-b28074a5d7da?w=800', 'https://images.unsplash.com/photo-1590050751624-c79b0150d7dc?w=800'],
-    location: { lat: 23.8583, lng: 72.1365, address: 'Rani ki Vav Area, Patan', nearestLandmark: 'Patan Bus Station' },
+    photos: [
+      'https://images.unsplash.com/photo-1524492412937-b28074a5d7da?auto=format&fit=crop&q=80&w=1000',
+      'https://images.unsplash.com/photo-1590050751624-c79b0150d7dc?auto=format&fit=crop&q=80&w=1000'
+    ],
+    location: { lat: 23.8583, lng: 72.1365, address: 'Rani ki Vav Area, Patan', city: 'Patan', nearestLandmark: 'Patan Bus Station' },
     vibes: ['Architecture', 'Culture', 'Art'],
     bestTime: { timeOfDay: 'Noon', season: 'Spring' },
     whatToBring: ['Camera with wide lens', 'Water', 'Sun hat'],

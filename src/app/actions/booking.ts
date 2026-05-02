@@ -11,8 +11,14 @@ export interface BookingData {
   gemId: string;
   gemTitle: string;
   bookingDate: string;
-  status: 'pending' | 'confirmed' | 'cancelled';
+  status: 'pending' | 'accepted' | 'confirmed' | 'completed' | 'cancelled';
+  mode: 'self' | 'online' | 'in-person';
+  paymentStatus: 'pending' | 'held' | 'released' | 'refunded';
   price: number;
+  identityConfirmedTraveler: boolean;
+  identityConfirmedGuide: boolean;
+  locationShared: boolean;
+  sosTriggered: boolean;
 }
 
 /**
