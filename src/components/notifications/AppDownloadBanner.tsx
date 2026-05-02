@@ -6,7 +6,22 @@ import { useAuth } from '@/lib/auth-context';
 
 export default function AppDownloadBanner() {
   const { userData } = useAuth();
-  const [isVisible, setIsVisible] = React.useState(true);
+  const [isVisible, setIsVisible] = React.useState(false);
+
+  React.useEffect(() => {
+    // Only show if not dismissed and user exists
+    const isDismissed = localStorage.getItem('roamly_banner_dismissed');
+    if (!isDismissed && userData) {
+      // Small delay for better UX
+      const timer = setTimeout(() => setIsVisible(true), 1500);
+      return () => clearTimeout(timer);
+    }
+  }, [userData]);
+
+  const handleDismiss = () => {
+    setIsVisible(false);
+    localStorage.setItem('roamly_banner_dismissed', 'true');
+  };
 
   if (!isVisible || !userData) return null;
 
@@ -17,7 +32,7 @@ export default function AppDownloadBanner() {
         <div className="absolute -top-12 -right-12 w-32 h-32 bg-brand-ember/20 blur-[60px] rounded-full group-hover:bg-brand-ember/30 transition-all duration-700" />
         
         <button 
-          onClick={() => setIsVisible(false)}
+          onClick={handleDismiss}
           className="absolute top-4 right-4 p-1 hover:bg-white/10 rounded-full transition-colors text-dark-secondary-text"
         >
           <X size={16} />

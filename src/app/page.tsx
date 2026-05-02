@@ -209,9 +209,11 @@ export default function LandingPage() {
 
           {/* Horizontal Scroll Snap Container */}
           <div 
-            className="flex gap-6 overflow-x-auto overflow-y-hidden pb-8 snap-x snap-mandatory scrollbar-hide -mx-4 px-4 lg:mx-0 lg:px-0"
+            className="flex gap-6 overflow-x-auto overflow-y-hidden pb-8 snap-x snap-mandatory scrollbar-hide -mx-4 px-4 lg:mx-0 lg:px-0 scroll-smooth"
             onWheel={(e) => {
-              if (e.deltaY !== 0) {
+              // Only trigger horizontal scroll if user is scrolling vertically with a mouse wheel
+              // Touchpads usually trigger both deltaX and deltaY or small deltas
+              if (Math.abs(e.deltaY) > 0 && Math.abs(e.deltaX) === 0) {
                 e.currentTarget.scrollLeft += e.deltaY;
                 e.preventDefault();
               }

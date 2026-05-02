@@ -284,6 +284,7 @@ export default function GemDetailPage() {
                    {bookingMode === 'in-person' ? 'Match with a Local' : 'Explore Privately'}
                  </h3>
                </div>
+               <div className="text-right">
                   <span className="text-3xl font-bold text-brand-ember">
                     {bookingMode === 'self' ? 'Free' : `$${(gem.price / 100).toFixed(0)}`}
                   </span>
