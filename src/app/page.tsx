@@ -2,6 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
+import { motion } from 'framer-motion';
 import { Compass, Users, Shield, Star, MapPin, Sparkles, ArrowRight, ChevronRight } from 'lucide-react';
 import Footer from '@/components/layout/Footer';
 import { SEED_GEMS } from '@/lib/seed';
@@ -38,9 +39,9 @@ const stats = [
 
 export default function LandingPage() {
   return (
-    <div className="min-h-screen">
+    <div className="flex flex-col">
       {/* Hero Section */}
-      <section className="relative min-h-screen flex items-center justify-center overflow-hidden pt-16">
+      <section className="relative min-h-[85vh] flex items-center justify-center overflow-hidden pt-24 pb-16">
         {/* Background gradient */}
         <div className="absolute inset-0" style={{
           background: 'radial-gradient(ellipse at 50% 0%, rgba(232, 96, 26, 0.15) 0%, transparent 60%)',
@@ -60,8 +61,13 @@ export default function LandingPage() {
           animationDelay: '1.5s',
         }} />
 
-        <div className="relative z-10 max-w-[1280px] mx-auto px-4 lg:px-6 text-center">
-          <div className="animate-slide-up">
+        <motion.div 
+          className="relative z-10 max-w-[1280px] mx-auto px-4 lg:px-6 text-center"
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, type: 'spring', stiffness: 100, damping: 20 }}
+        >
+          <div>
             {/* Badge */}
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full mb-6" style={{
               background: 'var(--color-brand-ember-15)',
@@ -117,7 +123,7 @@ export default function LandingPage() {
               </div>
             ))}
           </div>
-        </div>
+        </motion.div>
       </section>
 
       {/* Features Section */}
@@ -130,12 +136,18 @@ export default function LandingPage() {
             </h2>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 stagger-children">
-            {features.map(({ icon: Icon, title, description }) => (
-              <div
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {features.map(({ icon: Icon, title, description }, index) => (
+              <motion.div
                 key={title}
-                className="p-6 rounded-[22px] card-hover group"
-                style={{ background: 'var(--card)', border: '1px solid var(--border)' }}
+                className="p-6 rounded-[22px] group cursor-pointer"
+                style={{ background: 'var(--card)' }}
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, margin: "-50px" }}
+                transition={{ duration: 0.5, delay: index * 0.1, type: "spring", stiffness: 120, damping: 20 }}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
               >
                 <div className="w-12 h-12 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform" style={{
                   background: 'var(--color-brand-ember-15)',
@@ -144,7 +156,7 @@ export default function LandingPage() {
                 </div>
                 <h3 className="text-h3 mb-2" style={{ color: 'var(--primary-text)' }}>{title}</h3>
                 <p className="text-body" style={{ color: 'var(--secondary-text)' }}>{description}</p>
-              </div>
+              </motion.div>
             ))}
           </div>
         </div>
@@ -168,13 +180,22 @@ export default function LandingPage() {
             </Link>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 stagger-children">
-            {SEED_GEMS.slice(0, 3).map((gem) => (
-              <Link key={gem.id} href={`/gem/${gem.id}`} className="group block">
-                <div
-                  className="rounded-[22px] overflow-hidden card-hover"
-                  style={{ background: 'var(--card)', border: '1px solid var(--border)' }}
-                >
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {SEED_GEMS.slice(0, 3).map((gem, index) => (
+              <motion.div 
+                key={gem.id}
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, margin: "-50px" }}
+                transition={{ duration: 0.5, delay: index * 0.1, type: "spring", stiffness: 100, damping: 22 }}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+              >
+                <Link href={`/gem/${gem.id}`} className="group block h-full">
+                  <div
+                    className="rounded-[22px] overflow-hidden h-full"
+                    style={{ background: 'var(--card)' }}
+                  >
                   <div className="relative h-[200px] lg:h-[260px] overflow-hidden">
                     <div
                       className="w-full h-full bg-cover bg-center transition-transform duration-500 group-hover:scale-105"
@@ -205,8 +226,8 @@ export default function LandingPage() {
                       </div>
                     </div>
                   </div>
-                </div>
-              </Link>
+                </Link>
+              </motion.div>
             ))}
           </div>
 
@@ -221,9 +242,13 @@ export default function LandingPage() {
       {/* CTA Section */}
       <section className="py-20 lg:py-28" style={{ background: 'var(--surface)' }}>
         <div className="max-w-[1280px] mx-auto px-4 lg:px-6">
-          <div
+          <motion.div
             className="rounded-[22px] p-8 lg:p-16 text-center relative overflow-hidden"
-            style={{ background: 'var(--card)', border: '1px solid var(--border)' }}
+            style={{ background: 'var(--card)' }}
+            initial={{ opacity: 0, scale: 0.95 }}
+            whileInView={{ opacity: 1, scale: 1 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6, type: "spring", stiffness: 80, damping: 20 }}
           >
             <div className="absolute inset-0" style={{
               background: 'radial-gradient(ellipse at 50% 100%, rgba(232, 96, 26, 0.1) 0%, transparent 60%)',
@@ -251,7 +276,7 @@ export default function LandingPage() {
                 </Link>
               </div>
             </div>
-          </div>
+          </motion.div>
         </div>
       </section>
 

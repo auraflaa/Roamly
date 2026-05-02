@@ -3,7 +3,8 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Sun, Moon, Menu, X, LogOut, Shield } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Sun, Moon, Menu, X, LogOut, Shield, Compass } from 'lucide-react';
 import { useAuth } from '@/lib/auth-context';
 import { useThemeStore } from '@/lib/store';
 
@@ -23,19 +24,15 @@ export default function TopNav() {
   return (
     <>
       <header
-        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${isLanding ? 'glass' : ''}`}
-        style={{
-          background: isLanding ? undefined : 'var(--surface)',
-          borderBottom: isLanding ? 'none' : '1px solid var(--border)',
-        }}
+        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 glass`}
       >
         <div className="max-w-[1280px] mx-auto px-4 lg:px-6 h-16 flex items-center justify-between">
           {/* Logo */}
-          <Link href="/" className="flex items-center gap-2 group">
-            <div className="w-8 h-8 rounded-lg bg-brand-ember flex items-center justify-center text-white font-bold text-sm group-hover:scale-110 transition-transform">
-              R
+          <Link href="/" className="flex items-center gap-2.5 group">
+            <div className="relative flex items-center justify-center w-9 h-9 rounded-xl bg-gradient-to-br from-brand-ember to-brand-sienna shadow-lg shadow-brand-ember/20 group-hover:scale-105 transition-transform duration-300">
+              <Compass size={20} className="text-white" strokeWidth={2.5} />
             </div>
-            <span className="text-h3 font-semibold tracking-tight" style={{ color: 'var(--primary-text)' }}>
+            <span className="text-h3 font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white to-neutral-400" style={{ color: 'var(--primary-text)' }}>
               Roamly
             </span>
           </Link>
@@ -137,14 +134,26 @@ export default function TopNav() {
       </header>
 
       {/* Mobile Menu Overlay */}
-      {mobileOpen && (
-        <div className="fixed inset-0 z-40 lg:hidden animate-fade-in" onClick={() => setMobileOpen(false)}>
-          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
-          <div
-            className="absolute top-16 right-4 w-64 rounded-xl p-4 animate-slide-down shadow-2xl"
-            style={{ background: 'var(--card)', border: '1px solid var(--border)' }}
-            onClick={(e) => e.stopPropagation()}
+      <AnimatePresence>
+        {mobileOpen && (
+          <motion.div 
+            className="fixed inset-0 z-40 lg:hidden" 
+            onClick={() => setMobileOpen(false)}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
           >
+            <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
+            <motion.div
+              className="absolute top-16 right-4 w-64 rounded-xl p-4 shadow-2xl"
+              style={{ background: 'var(--card)', border: '1px solid var(--border)' }}
+              onClick={(e) => e.stopPropagation()}
+              initial={{ opacity: 0, y: -20, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -20, scale: 0.95 }}
+              transition={{ type: "spring", stiffness: 300, damping: 25 }}
+            >
             <div className="flex flex-col gap-1">
               {navLinks.map(({ href, label }) => (
                 <Link
@@ -223,10 +232,10 @@ export default function TopNav() {
                   </Link>
                 </>
               )}
-            </div>
-          </div>
-        </div>
-      )}
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </>
   );
 }

@@ -4,7 +4,7 @@ import { MapPin, Camera, Mail } from 'lucide-react';
 
 export default function Footer() {
   return (
-    <footer style={{ background: 'var(--surface)', borderTop: '1px solid var(--border)' }}>
+    <footer style={{ background: 'var(--surface)' }}>
       <div className="max-w-[1280px] mx-auto px-4 lg:px-6 py-12 lg:py-16">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 lg:gap-12">
           {/* Brand */}
