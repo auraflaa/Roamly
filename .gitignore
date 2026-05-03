@@ -52,10 +52,6 @@ yarn-error.log*
 .gemini/
 .claude/
 
-# Branding Assets (Source Folders)
-/Roamly_Logo_PNGs/
-/Roamly_Logo_Transparent_PNGs/
-
 # Firebase
 .firebase/
 firebase-debug.log*

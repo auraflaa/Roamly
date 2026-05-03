@@ -25,9 +25,10 @@ export default function DownloadPage() {
           <div className="relative">
             <div className="w-24 h-24 relative rounded-[22%] overflow-hidden shadow-2xl animate-pulse-subtle border border-white/10">
               <Image 
-                src="/assets/logos/09_app_icon_orange.png"
+                src="/assets/logos/non-transparent/07_icon_orange_bg.png"
                 alt="Roamly App Icon"
                 fill
+                sizes="(max-width: 768px) 96px, 96px"
                 className="object-cover"
               />
             </div>

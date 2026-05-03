@@ -23,7 +23,7 @@ export default function PostDetailPage() {
 
   const { post, comments, isLoading: loading, mutate } = useCommunityPost(id);
   const [isLiked, setIsLiked] = useState(false);
-  const [showComments, setShowComments] = useState(false);
+  const [showComments, setShowComments] = useState(true);
   const [newComment, setNewComment] = useState('');
 
   useEffect(() => {
@@ -31,6 +31,22 @@ export default function PostDetailPage() {
       setIsLiked(post.likedBy?.includes(firebaseUser?.uid || '') || false);
     }
   }, [post, firebaseUser]);
+
+  // Handle anchor scroll
+  useEffect(() => {
+    if (!loading && post && typeof window !== 'undefined') {
+      const hash = window.location.hash;
+      if (hash === '#comments') {
+        const timer = setTimeout(() => {
+          const element = document.getElementById('comments');
+          if (element) {
+            element.scrollIntoView({ behavior: 'smooth' });
+          }
+        }, 100);
+        return () => clearTimeout(timer);
+      }
+    }
+  }, [loading, post]);
 
   const handleLike = async (e?: React.MouseEvent) => {
     if (e) {
@@ -100,6 +116,33 @@ export default function PostDetailPage() {
       mutate(); // Rollback
     } else {
       mutate(); // Sync final state
+    }
+  };
+
+  const handleShare = async () => {
+    const shareData = {
+      title: post?.title || 'Roamly Story',
+      text: post?.subtitle || post?.description || 'Check out this discovery on Roamly!',
+      url: window.location.href,
+    };
+
+    if (navigator.share) {
+      try {
+        await navigator.share(shareData);
+      } catch (err) {
+        if ((err as Error).name !== 'AbortError') {
+          console.error("Error sharing:", err);
+        }
+      }
+    } else {
+      try {
+        await navigator.clipboard.writeText(window.location.href);
+        window.dispatchEvent(new CustomEvent('roamly:coming-soon', { 
+          detail: { message: 'Link copied to clipboard!' } 
+        }));
+      } catch (err) {
+        console.error("Error copying to clipboard:", err);
+      }
     }
   };
 
@@ -174,13 +217,13 @@ export default function PostDetailPage() {
                   <button data-coming-soon="Follow is coming soon" type="button" className="text-xs font-bold text-brand-ember hover:text-brand-sienna">Follow</button>
                 </div>
                 <p className="text-xs text-secondary-text">
-                  {post.readingTime || '3 min read'} · {getTimeAgo(post.createdAt.toDate())}
+                  {post.readingTime || '3 min read'} · {getTimeAgo(post.createdAt)}
                 </p>
               </div>
             </div>
             <div className="flex items-center gap-4 text-secondary-text">
               <button data-coming-soon="Save/bookmark coming soon" type="button" className="hover:text-brand-ember transition-colors"><Bookmark size={20} /></button>
-              <button data-coming-soon="Share features coming soon" type="button" className="hover:text-brand-ember transition-colors"><Share2 size={20} /></button>
+              <button onClick={handleShare} type="button" className="hover:text-brand-ember transition-colors"><Share2 size={20} /></button>
             </div>
           </div>
         </header>
@@ -227,12 +270,18 @@ export default function PostDetailPage() {
               <MessageCircle size={24} />
               <span className="font-bold">{post.commentCount}</span>
             </button>
+            <button 
+              onClick={handleShare}
+              className="flex items-center gap-2 text-secondary-text hover:text-brand-ember transition-all"
+            >
+              <Share2 size={24} />
+            </button>
           </div>
         </footer>
 
         {/* Comments Section */}
         {showComments && (
-          <div className="mt-12 animate-in slide-in-from-top duration-500">
+          <div id="comments" className="mt-12 animate-in slide-in-from-top duration-500">
             <h3 className="text-xl font-bold text-primary-text mb-8">Responses ({post.commentCount})</h3>
             
             {firebaseUser && (
@@ -273,7 +322,7 @@ export default function PostDetailPage() {
                     </div>
                     <div>
                       <p className="text-sm font-bold text-primary-text">{comment.authorName}</p>
-                      <p className="text-[10px] text-secondary-text">{getTimeAgo(comment.createdAt instanceof Date ? comment.createdAt : (comment.createdAt as any).toDate())}</p>
+                      <p className="text-[10px] text-secondary-text">{getTimeAgo(comment.createdAt)}</p>
                     </div>
                   </div>
                   <p className="text-secondary-text leading-relaxed pl-11">{comment.text}</p>

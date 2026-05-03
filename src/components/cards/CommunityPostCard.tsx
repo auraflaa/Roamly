@@ -22,8 +22,8 @@ export default function CommunityPostCard({ post, onLike, isLiked }: CommunityPo
   const [timeAgo, setTimeAgo] = React.useState<string>('Just now');
 
   React.useEffect(() => {
-    if (post.createdAt?.toDate) {
-      setTimeAgo(getTimeAgo(post.createdAt.toDate()));
+    if (post.createdAt) {
+      setTimeAgo(getTimeAgo(post.createdAt));
     }
   }, [post.createdAt]);
 
@@ -94,10 +94,13 @@ export default function CommunityPostCard({ post, onLike, isLiked }: CommunityPo
                   <Heart size={16} className={isLiked ? 'fill-current' : ''} />
                   <span className="font-bold">{post.likes}</span>
                 </button>
-                <div className="flex items-center gap-1.5 text-xs text-secondary-text">
+                <Link 
+                  href={`/community/post/${post.id}#comments`}
+                  className="flex items-center gap-1.5 text-xs text-secondary-text hover:text-brand-ember transition-all hover:scale-110"
+                >
                   <MessageCircle size={16} />
                   <span className="font-bold">{post.commentCount}</span>
-                </div>
+                </Link>
               </div>
             </div>
 

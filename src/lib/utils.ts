@@ -12,7 +12,22 @@ export function formatPrice(cents: number): string {
   }).format(cents / 100);
 }
 
-export function getTimeAgo(date: Date): string {
+export function getTimeAgo(dateInput: any): string {
+  if (!dateInput) return 'Some time ago';
+  
+  let date: Date;
+  if (dateInput instanceof Date) {
+    date = dateInput;
+  } else if (typeof dateInput.toDate === 'function') {
+    date = dateInput.toDate();
+  } else if (typeof dateInput === 'string' || typeof dateInput === 'number') {
+    date = new Date(dateInput);
+  } else if (dateInput.seconds) {
+    date = new Date(dateInput.seconds * 1000);
+  } else {
+    date = new Date();
+  }
+
   const now = new Date();
   const diff = now.getTime() - date.getTime();
   const minutes = Math.floor(diff / 60000);
@@ -46,3 +61,30 @@ export function estimateReadingTime(text: string): string {
   const minutes = Math.ceil(words / wordsPerMinute);
   return `${minutes} min read`;
 }
+
+/**
+ * Dispatches a global notification (toast).
+ */
+export function notify(message: string) {
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent('roamly:coming-soon', { 
+      detail: { message } 
+    }));
+  }
+}
+
+/**
+ * Safely converts various date-like objects to a JS Date.
+ */
+export function toAnyDate(dateInput: any): Date {
+  if (!dateInput) return new Date();
+  if (dateInput instanceof Date) return dateInput;
+  if (typeof dateInput.toDate === 'function') return dateInput.toDate();
+  if (typeof dateInput === 'string' || typeof dateInput === 'number') {
+    const d = new Date(dateInput);
+    return isNaN(d.getTime()) ? new Date() : d;
+  }
+  if (dateInput.seconds) return new Date(dateInput.seconds * 1000);
+  return new Date();
+}
+

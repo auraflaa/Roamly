@@ -20,9 +20,9 @@ export function useGems(options: { limit?: number; vibe?: string } = {}) {
         );
         const snap = await getDocs(q);
         return snap.docs.map(d => ({ ...d.data(), id: d.id } as Gem));
-      } catch (err) {
+      } catch (err: any) {
         console.error('Error fetching gems:', err);
-        return [];
+        throw err;
       }
     },
     {
@@ -66,9 +66,9 @@ export function useGem(id: string) {
         }
         
         return { ...snap.data(), id: snap.id } as Gem;
-      } catch (err) {
+      } catch (err: any) {
         console.error('Error fetching gem:', err);
-        return null;
+        throw err;
       }
     },
     {
@@ -92,12 +92,17 @@ export function useGuides(city?: string) {
   const { data, error, isLoading, mutate } = useSWR(
     city ? `guides/${city}` : 'guides/all',
     async () => {
-      const q = city 
-        ? query(collection(db, 'guides'), where('city', '==', city), limit(20))
-        : query(collection(db, 'guides'), where('verificationStatus', '==', 'approved'), limit(20));
-      
-      const snap = await getDocs(q);
-      return snap.docs.map(d => ({ ...d.data(), uid: d.id } as Guide));
+      try {
+        const q = city 
+          ? query(collection(db, 'guides'), where('city', '==', city), limit(20))
+          : query(collection(db, 'guides'), where('verificationStatus', '==', 'approved'), limit(20));
+        
+        const snap = await getDocs(q);
+        return snap.docs.map(d => ({ ...d.data(), uid: d.id } as Guide));
+      } catch (err: any) {
+        console.error('Error fetching guides:', err);
+        throw err;
+      }
     },
     {
       revalidateOnFocus: false,
@@ -130,9 +135,9 @@ export function useSavedGems(ids: string[]) {
         );
         const snap = await getDocs(q);
         return snap.docs.map(d => ({ ...d.data(), id: d.id } as Gem));
-      } catch (err) {
+      } catch (err: any) {
         console.error('Error fetching saved gems:', err);
-        return [];
+        throw err;
       }
     },
     {

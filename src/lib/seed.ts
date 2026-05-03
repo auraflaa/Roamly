@@ -192,12 +192,12 @@ export async function seedDatabase() {
       }
     }
 
-    // 2. Seed Community Posts
+    // 2. Seed Community Posts & Comments
     const postsCol = collection(db, 'community_posts');
     const postSnapshot = await getDocs(postsCol);
     
     if (postSnapshot.size === 0) {
-      console.log('Creating 50 new community posts...');
+      console.log('Creating 50 new community posts with comments...');
       for (let i = 1; i <= 50; i++) {
         const postId = `post-${i}`;
         await setDoc(doc(db, 'community_posts', postId), {
@@ -210,11 +210,22 @@ export async function seedDatabase() {
             PHOTOS[(i + 3) % PHOTOS.length]
           ],
           likes: Math.floor(Math.random() * 500),
-          commentCount: Math.floor(Math.random() * 50),
+          commentCount: 3, // Set to a fixed number for seeding
           flagCount: 0,
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString()
         });
+
+        // Seed 3 comments for each post
+        const commentsCol = collection(db, 'community_posts', postId, 'comments');
+        for (let j = 1; j <= 3; j++) {
+          await setDoc(doc(commentsCol, `comment-${j}`), {
+            text: `This looks like such an amazing ${VIBES[j % VIBES.length]} experience! Thanks for sharing.`,
+            authorId: `user-${(j + i) % 10 + 1}`,
+            authorName: `Explorer ${ (j + i) % 10 + 1 }`,
+            createdAt: new Date().toISOString()
+          });
+        }
       }
     } else {
       console.log('Updating photos for 50 existing posts...');
@@ -227,6 +238,21 @@ export async function seedDatabase() {
           ],
           updatedAt: new Date().toISOString()
         });
+
+        // Ensure comments subcollection has some data if empty
+        const commentsCol = collection(db, 'community_posts', postDoc.id, 'comments');
+        const commSnap = await getDocs(commentsCol);
+        if (commSnap.size === 0) {
+          for (let j = 1; j <= 2; j++) {
+            await setDoc(doc(commentsCol, `comment-${j}`), {
+              text: "Wow, this looks incredible! Added to my wishlist.",
+              authorId: 'user-1',
+              authorName: "Vibe Explorer",
+              createdAt: new Date().toISOString()
+            });
+          }
+          await updateDoc(doc(db, 'community_posts', postDoc.id), { commentCount: 2 });
+        }
       }
     }
     return { success: true, message: 'Database force-seeded with working URLs' };

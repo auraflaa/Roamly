@@ -29,7 +29,8 @@ export function usePersonalizedFeed(userId: string | undefined, userVibes: strin
     userId ? ['personalized-feed', userId, userVibes.join(','), JSON.stringify(sanitizedAffinities)] : null,
     async () => {
       if (!userId) return [];
-      return await getPersonalizedFeed(userId, userVibes, sanitizedAffinities);
+      const result = await getPersonalizedFeed(userId, userVibes, sanitizedAffinities) as any;
+      return result.success ? result.data : [];
     },
     {
       revalidateOnFocus: false,

@@ -58,7 +58,7 @@ export default function CommunityPage() {
   }, []);
 
   // Derived state for display
-  const displayPosts = React.useMemo(() => {
+  const displayPosts: CommunityPost[] = React.useMemo(() => {
     if (activeTab === 'for-you' && firebaseUser && notificationsEnabled) return rankedPosts;
     if (activeTab === 'latest') return posts;
     

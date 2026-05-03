@@ -13,12 +13,17 @@ export function useCommunityPosts() {
   const { data, error, isLoading, mutate } = useSWR(
     'community/posts',
     async () => {
-      const q = query(
-        collection(db, 'community_posts'),
-        limit(50)
-      );
-      const snap = await getDocs(q);
-      return snap.docs.map(d => ({ ...d.data(), id: d.id } as CommunityPost));
+      try {
+        const q = query(
+          collection(db, 'community_posts'),
+          limit(50)
+        );
+        const snap = await getDocs(q);
+        return snap.docs.map(d => ({ ...d.data(), id: d.id } as CommunityPost));
+      } catch (err: any) {
+        console.error("Error fetching community posts:", err);
+        throw err;
+      }
     },
     {
       revalidateOnFocus: true,
@@ -38,7 +43,8 @@ export function useCommunityPosts() {
  * Hook to fetch a single community post and its comments.
  */
 export function useCommunityPost(id: string) {
-  const sanitizedId = id?.replace(/%20| /g, '-');
+  // Strip any hash fragments (e.g., #comments) and replace spaces/encoded spaces
+  const sanitizedId = id?.split('#')[0]?.replace(/%20| /g, '-');
   
   const { data, error, isLoading, mutate } = useSWR(
     sanitizedId ? `community/post/${sanitizedId}` : null,
@@ -73,9 +79,9 @@ export function useCommunityPost(id: string) {
         } as Comment));
         
         return { post: postData, comments: commentsData };
-      } catch (err) {
+      } catch (err: any) {
         console.error("Error fetching community post:", err);
-        return null;
+        throw err; // Throwing allows SWR to set the 'error' state
       }
     }
   );

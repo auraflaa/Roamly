@@ -3,6 +3,7 @@
 import React from 'react';
 import { Smartphone, Download, ShieldCheck, X } from 'lucide-react';
 import { useAuth } from '@/lib/auth-context';
+import Link from 'next/link';
 
 export default function AppDownloadBanner() {
   const { userData } = useAuth();
@@ -54,16 +55,16 @@ export default function AppDownloadBanner() {
             </p>
             
             <div className="flex gap-3">
-              <a 
-                href="/downloads/roamly-v1.apk" 
+              <Link 
+                href="/download" 
                 className="flex-1 py-3 px-4 rounded-xl bg-brand-ember hover:bg-brand-sienna text-white text-xs font-bold transition-all flex items-center justify-center gap-2 shadow-lg shadow-brand-ember/20"
               >
                 <Download size={14} />
-                Download APK
-              </a>
+                Get the App
+              </Link>
               <div className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-elevated/10 border border-border text-[10px] font-bold text-brand-ember uppercase tracking-wider">
                 <ShieldCheck size={12} />
-                Secure
+                Coming Soon
               </div>
             </div>
           </div>

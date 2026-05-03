@@ -36,8 +36,10 @@ export async function getPersonalizedFeed(userId: string, userVibes: string[] = 
       score += (post.commentCount || 0) * 3;
 
       // 3. Recency
-      if (post.createdAt?.toDate) {
-        const postDate = post.createdAt.toDate();
+      if (post.createdAt) {
+        const postDate = typeof post.createdAt === 'string' ? new Date(post.createdAt) : 
+                        (typeof post.createdAt.toDate === 'function' ? post.createdAt.toDate() : 
+                        (post.createdAt.seconds ? new Date(post.createdAt.seconds * 1000) : new Date()));
         const ageInHours = (Date.now() - postDate.getTime()) / 3600000;
         score -= ageInHours * 0.5;
       }
@@ -50,9 +52,9 @@ export async function getPersonalizedFeed(userId: string, userVibes: string[] = 
       } as any;
     });
 
-    return rankedPosts.sort((a, b) => b.personalizationScore - a.personalizationScore);
-  } catch (err) {
+    return { success: true, data: rankedPosts.sort((a, b) => b.personalizationScore - a.personalizationScore) };
+  } catch (err: any) {
     console.error("Error generating personalized feed:", err);
-    return [];
+    return { success: false, error: err.message || "Failed to generate feed", data: [] };
   }
 }
