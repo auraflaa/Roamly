@@ -10,7 +10,6 @@ import { db } from '@/lib/firebase';
 import Footer from '@/components/layout/Footer';
 import type { Gem } from '@/lib/types';
 import { useAuth } from '@/lib/auth-context';
-import { getPersonalizedVibes } from '@/app/actions/personalization';
 import { useGems } from '@/lib/hooks/use-gems';
 import { useCommunityPosts } from '@/lib/hooks/use-community';
 import OptimizedImage from '@/components/ui/OptimizedImage';
@@ -388,7 +387,7 @@ export default function LandingPage() {
                 </div>
               ))
             ) : gems.length > 0 ? (
-              gems.map((gem, index) => (
+              gems.map((gem, index: number) => (
                 <motion.div 
                   key={gem.id}
                   initial={{ opacity: 0, x: 50 }}
@@ -461,7 +460,7 @@ export default function LandingPage() {
           </motion.div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {homeFeatures.map(({ icon: iconName, title, description }, index) => {
+            {homeFeatures.map(({ icon: iconName, title, description }: any, index: number) => {
               const Icon = IconMap[iconName] || Sparkles;
               return (
                 <motion.div

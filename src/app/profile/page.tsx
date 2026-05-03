@@ -104,7 +104,7 @@ export default function ProfilePage() {
             {userData.photoURL ? (
               <OptimizedImage 
                 src={userData.photoURL} 
-                alt={userData.displayName} 
+                alt={userData.displayName || "User"} 
                 aspectRatio="square"
                 className="w-full h-full object-cover rounded-full" 
               />

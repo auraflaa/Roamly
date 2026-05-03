@@ -16,7 +16,7 @@ export interface PostData {
   title: string;
   subtitle?: string;
   description: string;
-  content: string;
+  content?: string;
   vibeTags: string[];
   gemId?: string;
   readingTime?: string;

@@ -118,7 +118,7 @@ export default function GuideProfilePage() {
                   <Globe size={18} className="text-brand-ember" />
                   <span className="font-medium">{
                     (guide.languages && Array.isArray(guide.languages))
-                      ? guide.languages.map(l => typeof l === 'string' ? l : (l.language || l.name || l.code)).join(', ')
+                      ? guide.languages.map((l: any) => typeof l === 'string' ? l : (l.language || l.name || l.code)).join(', ')
                       : (guide.languages || 'English')
                   }</span>
                 </div>

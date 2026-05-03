@@ -46,11 +46,14 @@ export default function PostDetailPage() {
       
       // Optimistic UI update
       mutate({
-        ...post,
-        likes: post.likes + (newIsLiked ? 1 : -1),
-        likedBy: newIsLiked 
-          ? [...(post.likedBy || []), firebaseUser.uid]
-          : (post.likedBy || []).filter(uid => uid !== firebaseUser.uid)
+        post: {
+          ...post,
+          likes: post.likes + (newIsLiked ? 1 : -1),
+          likedBy: newIsLiked 
+            ? [...(post.likedBy || []), firebaseUser.uid]
+            : (post.likedBy || []).filter(uid => uid !== firebaseUser.uid)
+        },
+        comments
       }, false);
 
       const result = await toggleLike(post.id, newIsLiked);
@@ -77,24 +80,24 @@ export default function PostDetailPage() {
       id: 'temp-' + Date.now(),
       postId: post.id,
       authorId: firebaseUser.uid,
-      authorName: firebaseUser.displayName || 'Traveler',
-      authorPhoto: firebaseUser.photoURL || '',
+      authorName: (firebaseUser.displayName || 'Traveler') as string,
+      authorPhoto: firebaseUser.photoURL || undefined,
       text: commentText,
-      createdAt: { seconds: Date.now() / 1000, nanoseconds: 0 } as any
+      createdAt: { seconds: Math.floor(Date.now() / 1000), nanoseconds: 0 } as any
     };
 
     // Optimistic UI update via mutate
-    const currentData = { post, comments };
-    mutate({
+    const optimisticData = {
       post: { ...post, commentCount: post.commentCount + 1 },
       comments: [tempComment, ...comments]
-    }, false);
+    };
+    mutate(optimisticData, false);
 
     const result = await addComment(post.id, commentText);
     
     if (!result.success) {
       console.error("Comment failed:", result.error);
-      mutate(currentData); // Rollback
+      mutate(); // Rollback
     } else {
       mutate(); // Sync final state
     }
@@ -155,7 +158,7 @@ export default function PostDetailPage() {
                 {post.authorPhoto ? (
                   <OptimizedImage 
                     src={post.authorPhoto} 
-                    alt={post.authorName} 
+                    alt={post.authorName || 'Author'} 
                     aspectRatio="square"
                     className="w-full h-full rounded-full object-cover" 
                   />

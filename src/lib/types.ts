@@ -26,6 +26,8 @@ export interface User {
 
 export interface Guide {
   uid: string;
+  displayName?: string;
+  photoURL?: string;
   bio: string;
   languages: { language: string; proficiency: 'basic' | 'conversational' | 'fluent' | 'native' }[];
   city: string;
@@ -130,7 +132,7 @@ export interface Review {
 export interface CommunityPost {
   id: string;
   authorId: string;
-  authorName?: string;
+  authorName: string;
   authorPhoto?: string;
   gemId?: string;
   photos: string[];

@@ -50,7 +50,7 @@ export default function CommunityPostCard({ post, onLike, isLiked }: CommunityPo
               {post.authorPhoto ? (
                 <OptimizedImage 
                   src={post.authorPhoto} 
-                  alt={post.authorName} 
+                  alt={post.authorName || 'Author'} 
                   aspectRatio="square"
                   className="w-full h-full rounded-full object-cover" 
                 />

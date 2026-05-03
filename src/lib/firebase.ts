@@ -43,7 +43,6 @@ function getHardenedFirestore(): Firestore {
         ? persistentLocalCache({ tabManager: persistentMultipleTabManager() })
         : memoryLocalCache(),
       experimentalForceLongPolling: true,
-      useFetchStreams: false,
     }, DB_NAME);
   } catch (e) {
     // If already initialized (common in dev/HMR), get the existing instance
