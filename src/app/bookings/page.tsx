@@ -140,6 +140,8 @@ export default function BookingsPage() {
               {/* Actions */}
               <div className="flex flex-row lg:flex-col gap-3 w-full lg:w-auto">
                 <button 
+                  data-coming-soon="Chat with guide coming soon"
+                  type="button"
                   className="flex-1 lg:flex-none px-6 py-3 rounded-2xl bg-elevated/10 border border-border text-sm font-bold text-primary-text hover:bg-elevated/20 transition-all flex items-center justify-center gap-2"
                 >
                   <MessageSquare size={16} />

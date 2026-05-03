@@ -1,6 +1,6 @@
 'use client';
 
-import { doc, updateDoc, arrayUnion, arrayRemove, increment } from 'firebase/firestore';
+import { doc, updateDoc, arrayUnion, arrayRemove, increment, addDoc, collection, serverTimestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useAuth } from '@/lib/auth-context';
 
@@ -50,6 +50,49 @@ export function useUserActions() {
     }
   };
 
+  const toggleLike = async (postId: string, isLiking: boolean) => {
+    if (!firebaseUser || !postId) return { success: false, error: 'Auth required' };
+    const sanitizedId = postId?.replace(/%20| /g, '-');
+    try {
+      const postRef = doc(db, 'community_posts', sanitizedId);
+      await updateDoc(postRef, {
+        likes: increment(isLiking ? 1 : -1),
+        likedBy: isLiking ? arrayUnion(firebaseUser.uid) : arrayRemove(firebaseUser.uid)
+      });
+
+      await refreshUserData();
+      return { success: true };
+    } catch (err: any) {
+      console.error('Error toggling like:', err);
+      return { success: false, error: err.message };
+    }
+  };
+
+  const addCommentClient = async (postId: string, text: string) => {
+    if (!firebaseUser || !postId || !text) return { success: false, error: 'Auth required' };
+    const sanitizedId = postId?.replace(/%20| /g, '-');
+    try {
+      const commentsCol = collection(db, 'community_posts', sanitizedId, 'comments');
+      await addDoc(commentsCol, {
+        userId: firebaseUser.uid,
+        userName: firebaseUser.displayName || 'Traveler',
+        text,
+        createdAt: serverTimestamp()
+      });
+
+      const postRef = doc(db, 'community_posts', sanitizedId);
+      await updateDoc(postRef, {
+        commentCount: increment(1)
+      });
+
+      await refreshUserData();
+      return { success: true };
+    } catch (err: any) {
+      console.error('Error adding comment:', err);
+      return { success: false, error: err.message };
+    }
+  };
+
   const toggleWishlist = async (gemId: string, isWishlisting: boolean) => {
     if (!firebaseUser || !gemId) return { success: false, error: 'Auth required' };
 
@@ -71,6 +114,8 @@ export function useUserActions() {
   return {
     trackInteraction,
     toggleSavedGem,
+    toggleLike,
+    addComment: addCommentClient,
     toggleWishlist
   };
 }

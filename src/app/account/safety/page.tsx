@@ -43,13 +43,13 @@ export default function SafetyPage() {
                 </div>
               </>
             ) : (
-              <>
+                <>
                 <AlertCircle className="text-brand-ember" />
                 <div className="flex-1">
                   <p className="text-sm font-medium" style={{ color: 'var(--primary-text)' }}>Not Verified</p>
                   <p className="text-xs text-secondary-text">Verify your ID to unlock premium guides and bookings.</p>
                 </div>
-                <button className="px-4 py-2 rounded-lg bg-brand-ember text-white text-xs font-medium">Verify Now</button>
+                <button data-coming-soon="Identity verification coming soon" type="button" className="px-4 py-2 rounded-lg bg-brand-ember text-white text-xs font-medium">Verify Now</button>
               </>
             )}
           </div>
@@ -59,7 +59,7 @@ export default function SafetyPage() {
         <div className="p-6 rounded-2xl bg-card border border-border">
           <h3 className="text-lg font-semibold mb-4" style={{ color: 'var(--primary-text)' }}>Emergency Contacts</h3>
           <p className="text-sm text-secondary-text mb-4">We'll notify these contacts in case of an SOS trigger during a trip.</p>
-          <button className="w-full py-3 rounded-xl border border-dashed border-border text-sm font-medium text-brand-ember hover:bg-brand-ember/5 transition-colors">
+          <button data-coming-soon="Add emergency contact coming soon" type="button" className="w-full py-3 rounded-xl border border-dashed border-border text-sm font-medium text-brand-ember hover:bg-brand-ember/5 transition-colors">
             + Add Contact
           </button>
         </div>

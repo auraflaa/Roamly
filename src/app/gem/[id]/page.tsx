@@ -117,14 +117,14 @@ export default function GemDetailPage() {
           >
             <ArrowLeft size={20} className="text-white" />
           </button>
-          <div className="flex gap-3">
+            <div className="flex gap-3">
             <button
               onClick={handleToggleSave}
               className="p-3 rounded-2xl glass transition-all hover:scale-110 active:scale-95"
             >
               <Heart size={20} className={isSaved ? 'fill-brand-ember text-brand-ember' : 'text-white'} />
             </button>
-            <button className="p-3 rounded-2xl glass transition-all hover:scale-110 active:scale-95">
+            <button data-coming-soon="Share features coming soon" type="button" className="p-3 rounded-2xl glass transition-all hover:scale-110 active:scale-95">
               <Share2 size={20} className="text-white" />
             </button>
           </div>
@@ -173,7 +173,7 @@ export default function GemDetailPage() {
             <div className="text-center border-r border-border pr-6">
               <div className="flex items-center gap-1 justify-center mb-1">
                 <Star size={20} className="fill-brand-ember text-brand-ember" />
-                <span className="text-2xl font-bold text-primary-text">{gem.rating}</span>
+                <span className="text-2xl font-bold text-primary-text">{(Number(gem.rating) || 5).toFixed(1)}</span>
               </div>
               <p className="text-xs text-secondary-text uppercase tracking-widest font-bold">{gem.reviewCount} Reviews</p>
             </div>
@@ -336,7 +336,7 @@ export default function GemDetailPage() {
                       </div>
                       <div className="flex items-center gap-2">
                         <Star size={12} className="fill-brand-ember text-brand-ember" />
-                        <span className="text-xs text-secondary-text">{guide.rating} · 98% Response</span>
+                        <span className="text-xs text-secondary-text">{(Number(guide.rating) || 5).toFixed(1)} · 98% Response</span>
                       </div>
                     </div>
                   </button>

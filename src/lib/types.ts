@@ -21,6 +21,7 @@ export interface User {
   itineraryCount?: number;
   preferredLanguage?: string;
   bio?: string;
+  notificationsEnabled?: boolean;
 }
 
 export interface Guide {

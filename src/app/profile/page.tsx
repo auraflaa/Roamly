@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/lib/auth-context';
 import { useRouter } from 'next/navigation';
-import { Calendar, User, Settings, Star, MapPin, Heart, Shield, LogOut, Check, X, Camera, Loader2 } from 'lucide-react';
+import { Calendar, User, Settings, Star, MapPin, Heart, Shield, LogOut, Check, X, Camera, Loader2, Smartphone } from 'lucide-react';
 import OptimizedImage from '@/components/ui/OptimizedImage';
 import { doc, updateDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
@@ -253,6 +253,19 @@ export default function ProfilePage() {
             <span className="text-brand-ember">›</span>
           </button>
         )}
+
+        <div className="rounded-[16px] overflow-hidden" style={{ background: 'var(--card)', border: '1px solid var(--border)' }}>
+          <button 
+            onClick={() => router.push('/download')}
+            className="w-full flex items-center justify-between p-4 transition-colors hover:bg-brand-ember/5"
+          >
+            <div className="flex items-center gap-3">
+              <Smartphone size={20} className="text-brand-ember" />
+              <span className="text-sm font-medium" style={{ color: 'var(--primary-text)' }}>Download Roamly App</span>
+            </div>
+            <span className="text-secondary-text">›</span>
+          </button>
+        </div>
 
         <button
           onClick={handleSignOut}

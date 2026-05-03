@@ -102,8 +102,8 @@ export default function CommunityPostCard({ post, onLike, isLiked }: CommunityPo
             </div>
 
             <div className="flex items-center gap-3 text-secondary-text">
-              <button className="hover:text-brand-ember transition-colors"><Bookmark size={18} /></button>
-              <button className="hover:text-brand-ember transition-colors"><MoreHorizontal size={18} /></button>
+              <button data-coming-soon="Save/bookmark coming soon" type="button" className="hover:text-brand-ember transition-colors"><Bookmark size={18} /></button>
+              <button data-coming-soon="More actions coming soon" type="button" className="hover:text-brand-ember transition-colors"><MoreHorizontal size={18} /></button>
             </div>
           </div>
         </div>

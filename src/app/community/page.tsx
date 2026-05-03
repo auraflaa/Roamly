@@ -6,7 +6,7 @@ import OptimizedImage from '@/components/ui/OptimizedImage';
 import { SkeletonPostCard } from '@/components/ui/Skeleton';
 import type { CommunityPost } from '@/lib/types';
 import { useAuth } from '@/lib/auth-context';
-import { toggleLike } from '@/app/actions/community';
+import { useUserActions } from '@/lib/hooks/use-user';
 import dynamic from 'next/dynamic';
 
 const CreatePostModal = dynamic(() => import('@/components/modals/CreatePostModal'), {
@@ -20,15 +20,38 @@ import Link from 'next/link';
 export default function CommunityPage() {
   const { firebaseUser, userData } = useAuth();
   const { posts, isLoading: loading, mutate } = useCommunityPosts();
+  const { toggleLike } = useUserActions();
+  
+  const notificationsEnabled = userData?.notificationsEnabled ?? true;
 
   const { rankedPosts, isLoading: rankedLoading } = usePersonalizedFeed(
-    firebaseUser?.uid,
+    (firebaseUser?.uid && notificationsEnabled) ? firebaseUser.uid : undefined,
     userData?.vibes || [],
     userData?.vibeAffinities || {}
   );
 
   const [hasMounted, setHasMounted] = useState(false);
-  const [activeTab, setActiveTab] = useState<string>('for-you');
+
+  const tabs = React.useMemo(() => {
+    const baseTabs = [
+      { id: 'latest', label: 'Latest' },
+      { id: 'Adventure', label: 'Adventure' },
+      { id: 'Culture', label: 'Local Culture' }
+    ];
+    if (notificationsEnabled && firebaseUser) {
+      return [{ id: 'for-you', label: 'For you' }, ...baseTabs];
+    }
+    return baseTabs;
+  }, [notificationsEnabled, firebaseUser]);
+
+  const [activeTab, setActiveTab] = useState<string>(notificationsEnabled && firebaseUser ? 'for-you' : 'latest');
+
+  // Switch tab if current tab is hidden
+  React.useEffect(() => {
+    if (activeTab === 'for-you' && (!notificationsEnabled || !firebaseUser)) {
+      setActiveTab('latest');
+    }
+  }, [notificationsEnabled, firebaseUser, activeTab]);
 
   React.useEffect(() => {
     setHasMounted(true);
@@ -36,14 +59,14 @@ export default function CommunityPage() {
 
   // Derived state for display
   const displayPosts = React.useMemo(() => {
-    if (activeTab === 'for-you' && firebaseUser) return rankedPosts;
+    if (activeTab === 'for-you' && firebaseUser && notificationsEnabled) return rankedPosts;
     if (activeTab === 'latest') return posts;
     
     // Vibe filtering
     return posts.filter(post => 
       post.vibeTags?.some(tag => tag.toLowerCase() === activeTab.toLowerCase())
     );
-  }, [activeTab, posts, rankedPosts, firebaseUser]);
+  }, [activeTab, posts, rankedPosts, firebaseUser, notificationsEnabled]);
 
   const isDisplayLoading = loading || (activeTab === 'for-you' && rankedLoading);
 
@@ -71,7 +94,7 @@ export default function CommunityPage() {
       false
     );
 
-    await toggleLike(postId, firebaseUser.uid, isLiking);
+    await toggleLike(postId, isLiking);
     mutate();
   };
 
@@ -94,27 +117,25 @@ export default function CommunityPage() {
 
           {/* Navigation/Tabs */}
           <div className="flex items-center gap-8 border-b border-border mb-8 overflow-x-auto no-scrollbar">
-            {[
-              { id: 'for-you', label: 'For you' },
-              { id: 'latest', label: 'Latest' },
-              { id: 'Adventure', label: 'Adventure' },
-              { id: 'Culture', label: 'Local Culture' }
-            ].map(tab => (
-              <button 
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`pb-4 text-sm whitespace-nowrap transition-all relative ${
-                  activeTab === tab.id 
-                    ? 'font-bold text-primary-text' 
-                    : 'text-secondary-text hover:text-primary-text font-medium'
-                }`}
-              >
-                {tab.label}
-                {activeTab === tab.id && (
-                  <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary-text rounded-full" />
-                )}
-              </button>
-            ))}
+            {tabs.map((tab) => {
+              const isActive = activeTab === tab.id;
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`pb-4 text-sm whitespace-nowrap transition-all relative ${
+                    isActive
+                      ? 'font-bold text-primary-text'
+                      : 'text-secondary-text hover:text-primary-text font-medium'
+                  }`}
+                >
+                  {tab.label}
+                  {isActive && (
+                    <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary-text rounded-full" />
+                  )}
+                </button>
+              );
+            })}
           </div>
         </div>
 

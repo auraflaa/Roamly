@@ -29,6 +29,8 @@ interface AuthContextType {
   signOut: () => Promise<void>;
   /** Manually triggers a re-fetch of the user's Firestore data */
   refreshUserData: () => Promise<void>;
+  /** Updates current user preferences in Firestore and local state */
+  updateUserPreferences: (prefs: Partial<User>) => Promise<void>;
 }
 
 /**
@@ -92,6 +94,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       savedGems: [],
       wishlist: [],
       vibes: [],
+      notificationsEnabled: true,
     };
     await setDoc(doc(db, 'users', cred.user.uid), newUser);
     setUserData(newUser);
@@ -112,6 +115,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         savedGems: [],
         wishlist: [],
         vibes: [],
+        notificationsEnabled: true,
       };
       await setDoc(doc(db, 'users', cred.user.uid), newUser);
       setUserData(newUser);
@@ -129,9 +133,34 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const updateUserPreferences = async (prefs: Partial<User>) => {
+    if (!firebaseUser || !userData) return;
+    
+    const updatedUser = { ...userData, ...prefs };
+    setUserData(updatedUser);
+    localStorage.setItem(`roamly_user_${firebaseUser.uid}`, JSON.stringify(updatedUser));
+    
+    try {
+      await setDoc(doc(db, 'users', firebaseUser.uid), prefs, { merge: true });
+    } catch (err) {
+      console.error("Error updating user preferences:", err);
+      // Rollback on error if necessary, but keep for now
+    }
+  };
+
   return (
     <AuthContext.Provider
-      value={{ firebaseUser, userData, loading, signIn, signUp, signInWithGoogle, signOut, refreshUserData }}
+      value={{ 
+        firebaseUser, 
+        userData, 
+        loading, 
+        signIn, 
+        signUp, 
+        signInWithGoogle, 
+        signOut, 
+        refreshUserData,
+        updateUserPreferences 
+      }}
     >
       {children}
     </AuthContext.Provider>

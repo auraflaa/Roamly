@@ -29,6 +29,7 @@ export const viewport: Viewport = {
 
 
 import { ThemeInitializer } from '@/components/providers/ThemeInitializer';
+import ComingSoonRoot from '@/components/ui/ComingSoon';
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -38,7 +39,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <ThemeInitializer />
         <AuthProvider>
           <SWRProvider>
-            <AppShell>{children}</AppShell>
+              <AppShell>{children}</AppShell>
+              <ComingSoonRoot />
           </SWRProvider>
         </AuthProvider>
       </body>

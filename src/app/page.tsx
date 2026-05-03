@@ -428,7 +428,7 @@ export default function LandingPage() {
                         </div>
                         <div className="flex items-center gap-1">
                           <Star size={14} className="fill-brand-ember text-brand-ember" />
-                          <span className="font-semibold">{gem.rating || '5.0'}</span>
+                          <span className="font-semibold">{(Number(gem.rating) || 5).toFixed(1)}</span>
                         </div>
                       </div>
                     </div>

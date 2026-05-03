@@ -5,7 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { doc, getDoc, collection, query, orderBy, limit, getDocs } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useAuth } from '@/lib/auth-context';
-import { toggleLike, addComment } from '@/app/actions/community';
+import { useUserActions } from '@/lib/hooks/use-user';
 import { ArrowLeft, Heart, MessageCircle, Share2, Sparkles, Loader2, Bookmark, MoreHorizontal } from 'lucide-react';
 import { getTimeAgo, getInitials } from '@/lib/utils';
 import type { CommunityPost, Comment } from '@/lib/types';
@@ -18,6 +18,8 @@ export default function PostDetailPage() {
   const router = useRouter();
   const { firebaseUser } = useAuth();
   const id = params?.id as string;
+
+  const { toggleLike, addComment } = useUserActions();
 
   const { post, comments, isLoading: loading, mutate } = useCommunityPost(id);
   const [isLiked, setIsLiked] = useState(false);
@@ -51,7 +53,7 @@ export default function PostDetailPage() {
           : (post.likedBy || []).filter(uid => uid !== firebaseUser.uid)
       }, false);
 
-      const result = await toggleLike(post.id, firebaseUser.uid, newIsLiked);
+      const result = await toggleLike(post.id, newIsLiked);
       if (!result.success) {
         console.error("Like failed:", result.error);
         // Rollback
@@ -88,7 +90,7 @@ export default function PostDetailPage() {
       comments: [tempComment, ...comments]
     }, false);
 
-    const result = await addComment(post.id, firebaseUser.uid, firebaseUser.displayName || 'Traveler', commentText);
+    const result = await addComment(post.id, commentText);
     
     if (!result.success) {
       console.error("Comment failed:", result.error);
@@ -128,7 +130,7 @@ export default function PostDetailPage() {
             <Sparkles size={16} className="text-brand-ember" />
             <span className="text-xs font-bold uppercase tracking-widest text-brand-ember">Discovery Story</span>
           </div>
-          <button className="p-2 hover:bg-elevated/20 rounded-full transition-colors">
+          <button data-coming-soon="Story actions coming soon" type="button" className="p-2 hover:bg-elevated/20 rounded-full transition-colors">
             <MoreHorizontal size={20} />
           </button>
         </div>
@@ -166,7 +168,7 @@ export default function PostDetailPage() {
                   <p className="font-bold text-primary-text hover:underline cursor-pointer">
                     {post.authorName}
                   </p>
-                  <button className="text-xs font-bold text-brand-ember hover:text-brand-sienna">Follow</button>
+                  <button data-coming-soon="Follow is coming soon" type="button" className="text-xs font-bold text-brand-ember hover:text-brand-sienna">Follow</button>
                 </div>
                 <p className="text-xs text-secondary-text">
                   {post.readingTime || '3 min read'} · {getTimeAgo(post.createdAt.toDate())}
@@ -174,8 +176,8 @@ export default function PostDetailPage() {
               </div>
             </div>
             <div className="flex items-center gap-4 text-secondary-text">
-              <button className="hover:text-brand-ember transition-colors"><Bookmark size={20} /></button>
-              <button className="hover:text-brand-ember transition-colors"><Share2 size={20} /></button>
+              <button data-coming-soon="Save/bookmark coming soon" type="button" className="hover:text-brand-ember transition-colors"><Bookmark size={20} /></button>
+              <button data-coming-soon="Share features coming soon" type="button" className="hover:text-brand-ember transition-colors"><Share2 size={20} /></button>
             </div>
           </div>
         </header>

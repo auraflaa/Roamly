@@ -105,7 +105,7 @@ export default function GuideProfilePage() {
                 <h1 className="text-4xl lg:text-5xl font-bold text-primary-text">{guide.displayName || 'Local Expert'}</h1>
                 <div className="flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-elevated/5 border border-border text-brand-ember text-sm font-bold uppercase tracking-widest">
                   <Star size={14} className="fill-brand-ember" />
-                  {guide.rating || '5.0'}
+                  {(Number(guide.rating) || 5).toFixed(1)}
                 </div>
               </div>
 
@@ -116,7 +116,11 @@ export default function GuideProfilePage() {
                 </div>
                 <div className="flex items-center gap-2">
                   <Globe size={18} className="text-brand-ember" />
-                  <span className="font-medium">{guide.languages?.join(', ') || 'English, Hindi'}</span>
+                  <span className="font-medium">{
+                    (guide.languages && Array.isArray(guide.languages))
+                      ? guide.languages.map(l => typeof l === 'string' ? l : (l.language || l.name || l.code)).join(', ')
+                      : (guide.languages || 'English')
+                  }</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <Award size={18} className="text-brand-ember" />
@@ -125,14 +129,14 @@ export default function GuideProfilePage() {
               </div>
 
               <div className="flex flex-wrap justify-center lg:justify-start gap-4">
-                <button className="px-8 py-4 rounded-2xl bg-brand-ember hover:bg-brand-sienna text-white font-bold transition-all shadow-lg shadow-brand-ember/20 flex items-center gap-2">
+                <button data-coming-soon="In-site messaging coming soon" type="button" className="px-8 py-4 rounded-2xl bg-brand-ember hover:bg-brand-sienna text-white font-bold transition-all shadow-lg shadow-brand-ember/20 flex items-center gap-2">
                   <MessageSquare size={18} />
                   Message Guide
                 </button>
-                <button className="p-4 rounded-2xl bg-elevated/10 border border-border text-primary-text hover:bg-elevated/20 transition-all">
+                <button data-coming-soon="Save/like a guide is coming soon" type="button" className="p-4 rounded-2xl bg-elevated/10 border border-border text-primary-text hover:bg-elevated/20 transition-all">
                   <Heart size={20} />
                 </button>
-                <button className="p-4 rounded-2xl bg-elevated/10 border border-border text-primary-text hover:bg-elevated/20 transition-all">
+                <button data-coming-soon="Share features coming soon" type="button" className="p-4 rounded-2xl bg-elevated/10 border border-border text-primary-text hover:bg-elevated/20 transition-all">
                   <Share2 size={20} />
                 </button>
               </div>
@@ -169,7 +173,7 @@ export default function GuideProfilePage() {
           <section>
             <div className="flex items-center justify-between mb-8">
               <h2 className="text-3xl font-bold text-primary-text">Gems I Guide</h2>
-              <button className="text-brand-ember font-bold text-sm flex items-center gap-2">
+              <button data-coming-soon="View all gems coming soon" type="button" className="text-brand-ember font-bold text-sm flex items-center gap-2">
                 View All <ChevronRight size={16} />
               </button>
             </div>
@@ -224,7 +228,7 @@ export default function GuideProfilePage() {
              <p className="text-sm text-secondary-text leading-relaxed mb-6">
                Requests are usually confirmed within 2 hours. Local insiders handle everything from directions to hidden food spots.
              </p>
-             <button className="w-full py-4 rounded-2xl bg-brand-ember hover:bg-brand-sienna text-white font-bold transition-all shadow-lg shadow-brand-ember/20">
+             <button data-coming-soon="Itinerary & booking coming soon" type="button" className="w-full py-4 rounded-2xl bg-brand-ember hover:bg-brand-sienna text-white font-bold transition-all shadow-lg shadow-brand-ember/20">
                Check Itinerary
              </button>
           </div>
