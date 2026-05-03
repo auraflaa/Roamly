@@ -61,6 +61,7 @@ yarn-error.log*
 firebase-debug.log*
 .firebaserc
 .convo/
+firebase.txt
 
 # Vercel
 .vercel/
