@@ -13,6 +13,7 @@ import { createBooking } from '@/app/actions/booking';
 import { useUserActions } from '@/lib/hooks/use-user';
 
 import { useGem, useGuides } from '@/lib/hooks/use-gems';
+import { formatPrice } from '@/lib/utils';
 import OptimizedImage from '@/components/ui/OptimizedImage';
 
 export default function GemDetailPage() {
@@ -307,7 +308,7 @@ export default function GemDetailPage() {
                </div>
                <div className="text-right">
                   <span className="text-3xl font-bold text-brand-ember">
-                    {bookingMode === 'self' ? 'Free' : `$${((gem?.price || 0) / 100).toFixed(0)}`}
+                    {bookingMode === 'self' ? 'Free' : formatPrice(gem?.price || 0)}
                   </span>
                   {bookingMode === 'in-person' && <p className="text-[10px] text-secondary-text font-bold uppercase">PER PERSON</p>}
                </div>

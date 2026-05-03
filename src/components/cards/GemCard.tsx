@@ -9,6 +9,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { Star, Heart, MapPin, Clock, Sparkles } from 'lucide-react';
+import { formatPrice } from '@/lib/utils';
 import type { Gem } from '@/lib/types';
 
 /**
@@ -159,10 +160,10 @@ export default function GemCard({ gem, onSave, isSaved: initialIsSaved, personal
                 </span>
               </div>
             )}
-            {/* Pricing (Stored in cents) */}
+            {/* Pricing (Stored in cents/paisa) */}
             {gem.price && gem.price > 0 && (
               <span className="text-label text-brand-ember font-semibold">
-                ${(gem.price / 100).toFixed(0)}
+                {formatPrice(gem.price)}
               </span>
             )}
           </div>

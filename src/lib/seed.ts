@@ -74,7 +74,7 @@ const SEED_GEMS = Array.from({ length: 100 }, (_, i) => ({
     guideName: REAL_GUIDE_NAMES[i % REAL_GUIDE_NAMES.length],
     guideId: gid('guide', (i % 10) + 1)
   } : null,
-  price: Math.floor(Math.random() * 5000),
+  price: (Math.floor(Math.random() * 45) + 5) * 100 * 100, // ₹500 - ₹5000 in paisa
 }));
 
 // Generate 10 Guides
@@ -156,40 +156,23 @@ export async function seedDatabase() {
     const gemsCol = collection(db, 'gems');
     const gemSnapshot = await getDocs(gemsCol);
     
-    // Create gems if they don't exist, otherwise update their photos
-    if (gemSnapshot.size === 0) {
-      console.log('Creating 100 new gems...');
-      for (let i = 1; i <= 100; i++) {
-        const gemId = `gem-${i}`;
-        const photos = [
-          PHOTOS[i % PHOTOS.length],
-          PHOTOS[(i + 1) % PHOTOS.length]
-        ];
-        await setDoc(doc(db, 'gems', gemId), {
-          title: `${GEM_TITLES[i % GEM_TITLES.length]} ${i}`,
-          description: `An amazing place to visit. Experience the beauty of ${GEM_TITLES[i % GEM_TITLES.length]}.`,
-          location: 'Vibrant City, India',
-          photos: photos,
-          category: VIBES[i % VIBES.length],
-          rating: 4 + Math.random(),
-          reviewCount: Math.floor(Math.random() * 200),
-          guideId: `guide-${(i % 10) + 1}`,
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString()
-        });
-      }
-    } else {
-      console.log('Updating photos for 100 existing gems...');
-      for (const gemDoc of gemSnapshot.docs) {
-        const i = parseInt(gemDoc.id.split('-')[1]) || 0;
-        await updateDoc(doc(db, 'gems', gemDoc.id), {
-          photos: [
-            PHOTOS[i % PHOTOS.length],
-            PHOTOS[(i + 1) % PHOTOS.length]
-          ],
-          updatedAt: new Date().toISOString()
-        });
-      }
+    console.log(`Syncing ${SEED_GEMS.length} gems with correct INR pricing...`);
+    for (const gem of SEED_GEMS) {
+      await setDoc(doc(db, 'gems', gem.id), {
+        ...gem,
+        updatedAt: new Date().toISOString()
+      }, { merge: true });
+    }
+
+    // 2. Seed Guides
+    const guidesCol = collection(db, 'guides');
+    const guideSnapshot = await getDocs(guidesCol);
+    console.log(`Syncing ${SEED_GUIDES.length} guides...`);
+    for (const guide of SEED_GUIDES) {
+      await setDoc(doc(db, 'guides', guide.uid), {
+        ...guide,
+        updatedAt: new Date().toISOString()
+      }, { merge: true });
     }
 
     // 2. Seed Community Posts & Comments
