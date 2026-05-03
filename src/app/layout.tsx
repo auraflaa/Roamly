@@ -26,11 +26,15 @@ export const viewport: Viewport = {
   themeColor: '#0C0804',
 };
 
+import Script from 'next/script';
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
         <script
+          id="theme-init"
+          suppressHydrationWarning
           dangerouslySetInnerHTML={{
             __html: `
               (function() {

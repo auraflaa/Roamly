@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { getUploadUrl } from '@/app/actions/storage';
 import { Camera, Upload, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
+import { BUCKET_NAME, PROJECT_FOLDER } from '@/lib/s3';
 
 export default function BucketTest() {
   const [file, setFile] = useState<File | null>(null);
@@ -42,7 +43,7 @@ export default function BucketTest() {
       }
 
       // 3. Construct public URL
-      const publicUrl = `https://huggingface.co/buckets/ourafla/Roamly/${key}`;
+      const publicUrl = `https://huggingface.co/buckets/${BUCKET_NAME}/${key}`;
       setUploadedUrl(publicUrl);
       setStatus('success');
     } catch (err: any) {

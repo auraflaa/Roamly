@@ -27,7 +27,12 @@ export default function CommunityPage() {
     userData?.vibeAffinities || {}
   );
 
+  const [hasMounted, setHasMounted] = useState(false);
   const [activeTab, setActiveTab] = useState<'for-you' | 'latest'>('for-you');
+
+  React.useEffect(() => {
+    setHasMounted(true);
+  }, []);
 
   // Derived state for trending
   const trendingPosts = React.useMemo(() => {
@@ -103,7 +108,7 @@ export default function CommunityPage() {
         </div>
 
         <div className="space-y-4">
-          {isDisplayLoading ? (
+          {!hasMounted || isDisplayLoading ? (
             Array.from({ length: 3 }).map((_, i) => <SkeletonPostCard key={i} />)
           ) : displayPosts.length === 0 ? (
             <div className="text-center py-20">

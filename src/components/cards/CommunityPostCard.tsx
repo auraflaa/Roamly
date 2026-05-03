@@ -19,7 +19,13 @@ import { db } from '@/lib/firebase';
 
 export default function CommunityPostCard({ post, onLike, isLiked }: CommunityPostCardProps) {
   const { mutate } = useSWRConfig();
-  const timeAgo = post.createdAt?.toDate ? getTimeAgo(post.createdAt.toDate()) : 'Just now';
+  const [timeAgo, setTimeAgo] = React.useState<string>('Just now');
+
+  React.useEffect(() => {
+    if (post.createdAt?.toDate) {
+      setTimeAgo(getTimeAgo(post.createdAt.toDate()));
+    }
+  }, [post.createdAt]);
 
   const prefetchPost = () => {
     mutate(`community/post/${post.id}`, async () => {

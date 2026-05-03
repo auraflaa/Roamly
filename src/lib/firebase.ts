@@ -6,7 +6,7 @@
 
 import { initializeApp, getApps } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
-import { getFirestore, initializeFirestore } from 'firebase/firestore';
+import { initializeFirestore, persistentLocalCache, persistentMultipleTabManager } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
 
 /**
@@ -32,29 +32,20 @@ const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0
  */
 export const auth = getAuth(app);
 
+
 /**
  * Cloud Firestore database instance.
  * Note: Configured to use the specific "talk-with-zeno" named database.
  * Optimized with long-polling to prevent GrpcConnection ECONNRESET errors.
+ * Persistent cache configured for multi-tab support.
  */
 export const db = initializeFirestore(app, {
   experimentalForceLongPolling: true,
+  useFetchStreams: false,
+  cache: typeof window !== 'undefined' ? persistentLocalCache({
+    tabManager: persistentMultipleTabManager(),
+  }) : undefined,
 }, "talk-with-zeno");
-
-// Enable multi-tab persistence for high-performance client-side caching
-if (typeof window !== 'undefined') {
-  import('firebase/firestore').then(({ enableMultiTabIndexedDbPersistence }) => {
-    enableMultiTabIndexedDbPersistence(db).catch((err) => {
-      if (err.code === 'failed-precondition') {
-        // Multiple tabs open, persistence can only be enabled in one tab at a time.
-        console.warn('Firestore persistence failed: Multiple tabs open');
-      } else if (err.code === 'unimplemented') {
-        // The current browser does not support all of the features required to enable persistence
-        console.warn('Firestore persistence failed: Browser not supported');
-      }
-    });
-  });
-}
 
 /**
  * Cloud Storage instance.

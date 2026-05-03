@@ -5,7 +5,7 @@ import { useAuth } from '@/lib/auth-context';
 import { useRouter } from 'next/navigation';
 import { Users, ShieldAlert, Flag, CheckCircle, Database, Loader2, AlertTriangle, X } from 'lucide-react';
 import { seedDatabase } from '@/lib/seed';
-import { migrateGemsToBucket, syncPhotosToBucket } from '@/app/actions/migrate';
+import { syncCommunityPostsToBucket, syncPhotosToBucket } from '@/app/actions/migrate';
 import { collection, getCountFromServer, query, where } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import BucketTest from '@/components/debug/BucketTest';
@@ -55,14 +55,14 @@ export default function AdminDashboard() {
 
   const handleSeed = async () => {
     setSeeding(true);
-    setStatusMessage('Seeding database...');
-    const success = await seedDatabase();
+    setStatusMessage('Seeding database (Force-Update)...');
+    const result = await seedDatabase();
     if (isMounted.current) {
       setSeeding(false);
-      setStatusMessage(success ? 'Database seeded successfully!' : 'Error seeding database.');
+      setStatusMessage(result.success ? (result.message as string) : `Error: ${result.error}`);
       setTimeout(() => {
         if (isMounted.current) setStatusMessage('');
-      }, 3000);
+      }, 5000);
     }
   };
 
@@ -76,6 +76,23 @@ export default function AdminDashboard() {
       setSyncing(false);
       if (result.success) {
         setStatusMessage(`Sync complete: ${result.photos} images processed across ${result.gems} gems.`);
+      } else {
+        setStatusMessage(`Sync failed: ${result.error}`);
+      }
+      setTimeout(() => {
+        if (isMounted.current) setStatusMessage('');
+      }, 8000);
+    }
+  };
+
+  const handleSyncPosts = async () => {
+    setSyncing(true);
+    setStatusMessage('Syncing community post images to HF bucket...');
+    const result = await syncCommunityPostsToBucket();
+    if (isMounted.current) {
+      setSyncing(false);
+      if (result.success) {
+        setStatusMessage(`Sync complete: ${result.photos} post images processed across ${result.posts} posts.`);
       } else {
         setStatusMessage(`Sync failed: ${result.error}`);
       }
@@ -164,6 +181,20 @@ export default function AdminDashboard() {
                 <div>
                   <h4 className="font-bold text-brand-ember">Sync Bucket</h4>
                   <p className="text-xs text-brand-ember/60 mt-1">Migrate all images to HF Bucket storage.</p>
+                </div>
+              </button>
+
+              <button
+                onClick={handleSyncPosts}
+                disabled={syncing || seeding}
+                className="group p-6 rounded-2xl bg-blue-500/5 border border-blue-500/10 hover:bg-blue-500/10 transition-all text-left flex flex-col gap-3"
+              >
+                <div className="w-10 h-10 rounded-xl bg-blue-500 flex items-center justify-center text-white shadow-lg shadow-blue-500/20">
+                  {syncing ? <Loader2 size={20} className="animate-spin" /> : <Database size={20} />}
+                </div>
+                <div>
+                  <h4 className="font-bold text-blue-600">Sync Stories</h4>
+                  <p className="text-xs text-blue-600/60 mt-1">Migrate all story images to HF Bucket.</p>
                 </div>
               </button>
             </div>

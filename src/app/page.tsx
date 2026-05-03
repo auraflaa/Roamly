@@ -68,6 +68,7 @@ export default function LandingPage() {
   const [currentBg, setCurrentBg] = useState(0);
   const [showRecommendation, setShowRecommendation] = useState(false);
   const [isRecommendationDismissed, setIsRecommendationDismissed] = useState(false);
+  const [hasMounted, setHasMounted] = useState(false);
   const [platformStats, setPlatformStats] = useState({ gems: '500+', guides: '120+', travelers: '15K+', rating: '4.8' });
   const isMounted = React.useRef(true);
 
@@ -82,6 +83,7 @@ export default function LandingPage() {
   const heroOpacity = useTransform(scrollY, [0, 300], [1, 0]);
 
   useEffect(() => {
+    setHasMounted(true);
     // Hide scrollbar on mount
     document.body.classList.add('main-page');
 
@@ -107,7 +109,7 @@ export default function LandingPage() {
   const { posts: communityPosts, isLoading: communityLoading } = useCommunityPosts();
 
   useEffect(() => {
-    async function fetchPlatformStats() {
+    const fetchPlatformStats = async () => {
       try {
         const [gemsCount, guidesCount, usersCount] = await Promise.all([
           getCountFromServer(collection(db, 'gems')),
@@ -124,12 +126,12 @@ export default function LandingPage() {
           });
         }
       } catch (err) {
-        console.error("Error fetching platform stats:", err);
+        // Silently fail to fallback stats if network issues occur
       }
-    }
+    };
 
     fetchPlatformStats();
-  }, []);
+  }, [setPlatformStats]);
 
   return (
     <div className="flex flex-col" style={{ background: 'var(--bg)' }}>
@@ -345,14 +347,13 @@ export default function LandingPage() {
             className="flex gap-6 overflow-x-auto overflow-y-hidden pb-8 snap-x snap-mandatory scrollbar-hide -mx-4 px-4 lg:mx-0 lg:px-0 scroll-smooth"
             onWheel={(e) => {
               // Only trigger horizontal scroll if user is scrolling vertically with a mouse wheel
-              // Touchpads usually trigger both deltaX and deltaY or small deltas
               if (Math.abs(e.deltaY) > 0 && Math.abs(e.deltaX) === 0) {
                 e.currentTarget.scrollLeft += e.deltaY;
                 e.preventDefault();
               }
             }}
           >
-            {gemsLoading ? (
+            {!hasMounted || gemsLoading ? (
               // Loading Skeleton
               [1, 2, 3].map((i) => (
                 <div key={i} className="snap-center shrink-0 w-[300px] sm:w-[380px] lg:w-[420px] h-[480px] rounded-[28px] bg-elevated/50 animate-pulse flex items-center justify-center">
@@ -477,8 +478,8 @@ export default function LandingPage() {
           </motion.div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {communityLoading ? (
-              // Fallback/Loading
+            {!hasMounted || communityLoading ? (
+              // Loading Skeleton
               Array.from({ length: 3 }).map((_, i) => (
                 <div key={i} className="h-80 rounded-3xl bg-elevated/50 animate-pulse flex flex-col gap-4 p-4">
                   <div className="aspect-[16/10] bg-elevated/80 rounded-2xl" />

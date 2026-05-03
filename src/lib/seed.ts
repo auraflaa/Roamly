@@ -1,4 +1,4 @@
-import { collection, doc, setDoc, Timestamp } from 'firebase/firestore';
+import { collection, doc, setDoc, getDocs, updateDoc, Timestamp } from 'firebase/firestore';
 import { db } from './firebase';
 
 // Helper to generate IDs
@@ -15,21 +15,18 @@ const REAL_GUIDE_NAMES = [
 ];
 
 const PHOTOS = [
-  'https://images.unsplash.com/photo-1477959858617-67f85cf4f1df?auto=format&fit=crop&q=80&w=1000',
-  'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&q=80&w=1000',
-  'https://images.unsplash.com/photo-1596040033229-a9821ebd058d?auto=format&fit=crop&q=80&w=1000',
-  'https://images.unsplash.com/photo-1532336414038-cf19250c5757?auto=format&fit=crop&q=80&w=1000',
-  'https://images.unsplash.com/photo-1545389336-cf090694435e?auto=format&fit=crop&q=80&w=1000',
-  'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=1000',
-  'https://images.unsplash.com/photo-1561214115-f2f134cc4912?auto=format&fit=crop&q=80&w=1000',
-  'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&q=80&w=1000',
-  'https://images.unsplash.com/photo-1524492412937-b28074a5d7da?auto=format&fit=crop&q=80&w=1000',
-  'https://images.unsplash.com/photo-1514222139-b57c44ce073d?auto=format&fit=crop&q=80&w=1000',
-  'https://images.unsplash.com/photo-1582510003544-4d00b7f74220?auto=format&fit=crop&q=80&w=1000',
-  'https://images.unsplash.com/photo-1518548419970-58e3b4079ab2?auto=format&fit=crop&q=80&w=1000',
-  'https://images.unsplash.com/photo-1526772662000-3f88f10405ff?auto=format&fit=crop&q=80&w=1000',
-  'https://images.unsplash.com/photo-1513415277900-a62401e19be4?auto=format&fit=crop&q=80&w=1000',
-  'https://images.unsplash.com/photo-1548013146-72479768bbaa?auto=format&fit=crop&q=80&w=1000',
+  'https://picsum.photos/id/10/1200/800',
+  'https://picsum.photos/id/11/1200/800',
+  'https://picsum.photos/id/12/1200/800',
+  'https://picsum.photos/id/13/1200/800',
+  'https://picsum.photos/id/14/1200/800',
+  'https://picsum.photos/id/15/1200/800',
+  'https://picsum.photos/id/16/1200/800',
+  'https://picsum.photos/id/17/1200/800',
+  'https://picsum.photos/id/18/1200/800',
+  'https://picsum.photos/id/19/1200/800',
+  'https://picsum.photos/id/20/1200/800',
+  'https://picsum.photos/id/21/1200/800',
 ];
 
 const GEM_TITLES = [
@@ -150,28 +147,90 @@ const SEED_COMMUNITY_POSTS = Array.from({ length: 50 }, (_, i) => ({
 
 
 export async function seedDatabase() {
+  console.log('Starting Force-Seed...');
   try {
-    // Seed gems
-    for (const gem of SEED_GEMS) {
-      await setDoc(doc(db, 'gems', gem.id), gem);
+    // 1. Seed Gems
+    const gemsCol = collection(db, 'gems');
+    const gemSnapshot = await getDocs(gemsCol);
+    
+    // Create gems if they don't exist, otherwise update their photos
+    if (gemSnapshot.size === 0) {
+      console.log('Creating 100 new gems...');
+      for (let i = 1; i <= 100; i++) {
+        const gemId = `gem-${i}`;
+        const photos = [
+          PHOTOS[i % PHOTOS.length],
+          PHOTOS[(i + 1) % PHOTOS.length]
+        ];
+        await setDoc(doc(db, 'gems', gemId), {
+          title: `${GEM_TITLES[i % GEM_TITLES.length]} ${i}`,
+          description: `An amazing place to visit. Experience the beauty of ${GEM_TITLES[i % GEM_TITLES.length]}.`,
+          location: 'Vibrant City, India',
+          photos: photos,
+          category: CATEGORIES[i % CATEGORIES.length],
+          rating: 4 + Math.random(),
+          reviewCount: Math.floor(Math.random() * 200),
+          guideId: `guide-${(i % 10) + 1}`,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        });
+      }
+    } else {
+      console.log('Updating photos for 100 existing gems...');
+      for (const gemDoc of gemSnapshot.docs) {
+        const i = parseInt(gemDoc.id.split('-')[1]) || 0;
+        await updateDoc(doc(db, 'gems', gemDoc.id), {
+          photos: [
+            PHOTOS[i % PHOTOS.length],
+            PHOTOS[(i + 1) % PHOTOS.length]
+          ],
+          updatedAt: new Date().toISOString()
+        });
+      }
     }
-    // Seed users
-    for (const user of SEED_USERS) {
-      await setDoc(doc(db, 'users', user.uid), user);
+
+    // 2. Seed Community Posts
+    const postsCol = collection(db, 'community_posts');
+    const postSnapshot = await getDocs(postsCol);
+    
+    if (postSnapshot.size === 0) {
+      console.log('Creating 50 new community posts...');
+      for (let i = 1; i <= 50; i++) {
+        const postId = `post-${i}`;
+        await setDoc(doc(db, 'community_posts', postId), {
+          title: `Adventure in ${GEM_TITLES[i % GEM_TITLES.length]}`,
+          content: 'Just had the best time exploring this hidden gem! Highly recommend checking it out.',
+          authorId: `user-${(i % 10) + 1}`,
+          authorName: 'Traveler Explorer',
+          photos: [
+            PHOTOS[(i + 2) % PHOTOS.length],
+            PHOTOS[(i + 3) % PHOTOS.length]
+          ],
+          likes: Math.floor(Math.random() * 500),
+          commentCount: Math.floor(Math.random() * 50),
+          flagCount: 0,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        });
+      }
+    } else {
+      console.log('Updating photos for 50 existing posts...');
+      for (const postDoc of postSnapshot.docs) {
+        const i = parseInt(postDoc.id.split('-')[1]) || 0;
+        await updateDoc(doc(db, 'community_posts', postDoc.id), {
+          photos: [
+            PHOTOS[(i + 2) % PHOTOS.length],
+            PHOTOS[(i + 3) % PHOTOS.length]
+          ],
+          updatedAt: new Date().toISOString()
+        });
+      }
     }
-    // Seed guides
-    for (const guide of SEED_GUIDES) {
-      await setDoc(doc(db, 'guides', guide.uid), guide);
-    }
-    // Seed community posts
-    for (const post of SEED_COMMUNITY_POSTS) {
-      await setDoc(doc(db, 'community_posts', post.id), post);
-    }
-    console.log('Database seeded with 100+ items successfully!');
-    return true;
-  } catch (error) {
-    console.error('Error seeding database:', error);
-    return false;
+
+    return { success: true, message: 'Database force-seeded with working URLs' };
+  } catch (error: any) {
+    console.error('Seed failed:', error);
+    return { success: false, error: error.message };
   }
 }
 

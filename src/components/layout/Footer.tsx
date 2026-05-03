@@ -33,6 +33,7 @@ export default function Footer() {
                       fill
                       sizes="128px"
                       className="object-contain"
+                      priority
                     />
                   </motion.div>
                 </AnimatePresence>
