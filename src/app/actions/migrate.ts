@@ -9,6 +9,7 @@ import {
   increment,
 } from 'firebase/firestore/lite';
 import { db } from '@/lib/firebase-server';
+import { initFirebaseAdmin, uploadBufferToStorage } from '@/lib/firebase-admin';
 import { Buffer } from 'node:buffer';
 import https from 'node:https';
 import fs from 'node:fs';
@@ -79,10 +80,23 @@ async function processImage(url: string, localFolder: string, id: string, index:
 
   // Compress to WebP
   const compressed = await sharp(buffer)
-    .resize(900, 900, { fit: 'inside', withoutEnlargement: true }) // Optimized for Firestore document limits
-    .webp({ quality: 80 }) 
+    .resize(900, 900, { fit: 'inside', withoutEnlargement: true }) // Optimized for storage
+    .webp({ quality: 80 })
     .toBuffer();
-  
+
+  // If Firebase Admin is available, upload to Storage and return a download URL
+  try {
+    const adm = initFirebaseAdmin();
+    if (adm) {
+      const destPath = `${localFolder}/${id}/photo-${index}.webp`;
+      const publicUrl = await uploadBufferToStorage(compressed, destPath, 'image/webp');
+      return publicUrl;
+    }
+  } catch (e) {
+    console.warn('[SYNC] Firebase Admin not configured or upload failed, falling back to data URL', e);
+  }
+
+  // Fallback: return inline data URL
   return `data:image/webp;base64,${compressed.toString('base64')}`;
 }
 

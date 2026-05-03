@@ -71,7 +71,7 @@ export default function AdminDashboard() {
     const result = await seedHomepageSettings();
     if (isMounted.current) {
       setSeeding(false);
-      setStatusMessage(result.success ? result.message : `Error: ${result.error}`);
+      setStatusMessage(result.success ? (result.message ?? '') : `Error: ${result.error ?? 'unknown'}`);
       setTimeout(() => {
         if (isMounted.current) setStatusMessage('');
       }, 5000);
@@ -88,7 +88,7 @@ export default function AdminDashboard() {
       if (result.success) {
         setStatusMessage(`Migration complete! All images are now stored internally in Firestore.`);
       } else {
-        setStatusMessage(`Migration failed: ${result.message}`);
+        setStatusMessage(`Migration failed: ${result.message ?? 'Unknown error'}`);
       }
       setTimeout(() => {
         if (isMounted.current) setStatusMessage('');

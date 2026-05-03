@@ -61,3 +61,18 @@ yarn-error.log*
 firebase-debug.log*
 .firebaserc
 .convo/
+
+# Vercel
+.vercel/
+
+# Migration data and large media
+data/migration/
+
+# Firebase service account
+firebase-service-account.json
+*.service-account.json
+secrets.json
+
+# Editor
+.vscode/
+.idea/

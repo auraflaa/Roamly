@@ -80,6 +80,14 @@ Roamly is optimized for **Vercel Free Tier**:
 3.  Vercel will automatically detect Next.js and build the project.
 4.  **Note**: Assets are stored natively in Firestore, so no external storage bucket configuration is required after the initial sync.
 
+### Optional: Server-side image uploads (recommended)
+If you'd like server-side processing and uploads (so posts store Firebase Storage URLs instead of large inline data URLs), set the following environment variable in Vercel:
+
+- `FIREBASE_SERVICE_ACCOUNT_KEY` — the JSON service account object as a single-line string (copy the service account JSON and paste into the Vercel secret). Example: `{"type":"service_account", ...}`
+- `NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET` — your Firebase Storage bucket name (e.g. `your-project.appspot.com`)
+
+When `FIREBASE_SERVICE_ACCOUNT_KEY` is present, the server actions will upload images to Storage and store the public Storage URL in Firestore. If not present, the app will continue to store inline `data:image/...` images as a fallback.
+
 ---
 
 ## 🛡 License
