@@ -24,7 +24,7 @@ export default function CommunityPage() {
   
   const notificationsEnabled = userData?.notificationsEnabled ?? true;
 
-  const { rankedPosts, isLoading: rankedLoading } = usePersonalizedFeed(
+  const { rankedPosts, isLoading: rankedLoading, mutate: mutateRanked } = usePersonalizedFeed(
     (firebaseUser?.uid && notificationsEnabled) ? firebaseUser.uid : undefined,
     userData?.vibes || [],
     userData?.vibeAffinities || {}
@@ -72,30 +72,39 @@ export default function CommunityPage() {
 
   const handleLike = async (postId: string) => {
     if (!firebaseUser) return;
-    const post = posts.find(p => p.id === postId);
+    
+    // Find in displayPosts to cover all tabs
+    const post = displayPosts.find(p => p.id === postId);
     if (!post) return;
 
     const isLiking = !post.likedBy?.includes(firebaseUser.uid);
     
-    // Optimistic UI update via SWR mutate
-    mutate(
-      posts.map(p => {
-        if (p.id === postId) {
-          return {
-            ...p,
-            likes: p.likes + (isLiking ? 1 : -1),
-            likedBy: isLiking 
-              ? [...(p.likedBy || []), firebaseUser.uid] 
-              : (p.likedBy || []).filter(id => id !== firebaseUser.uid)
-          };
-        }
-        return p;
-      }),
-      false
-    );
+    const updateFn = (list: CommunityPost[]) => list.map(p => {
+      if (p.id === postId) {
+        return {
+          ...p,
+          likes: p.likes + (isLiking ? 1 : -1),
+          likedBy: isLiking 
+            ? [...(p.likedBy || []), firebaseUser.uid] 
+            : (p.likedBy || []).filter(id => id !== firebaseUser.uid)
+        };
+      }
+      return p;
+    });
 
-    await toggleLike(postId, isLiking);
-    mutate();
+    // Optimistic UI — apply immediately, don't revalidate after the write
+    // (avoids the flicker caused by SWR re-fetching stale server data)
+    mutate(updateFn(posts), false);
+    if (activeTab === 'for-you') {
+      mutateRanked(updateFn(rankedPosts), false);
+    }
+
+    // Fire-and-forget — optimistic state is already correct
+    toggleLike(postId, isLiking).catch(() => {
+      // On failure, roll back
+      mutate();
+      if (activeTab === 'for-you') mutateRanked();
+    });
   };
 
   return (

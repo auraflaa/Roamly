@@ -59,8 +59,6 @@ export function useUserActions() {
         likes: increment(isLiking ? 1 : -1),
         likedBy: isLiking ? arrayUnion(firebaseUser.uid) : arrayRemove(firebaseUser.uid)
       });
-
-      await refreshUserData();
       return { success: true };
     } catch (err: any) {
       console.error('Error toggling like:', err);

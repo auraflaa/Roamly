@@ -6,16 +6,15 @@ import type { CommunityPost } from '@/lib/types';
 import { getTimeAgo, getInitials } from '@/lib/utils';
 import Link from 'next/link';
 import OptimizedImage from '@/components/ui/OptimizedImage';
+import { useSWRConfig } from 'swr';
+import { doc, getDoc } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
 
 interface CommunityPostCardProps {
   post: CommunityPost;
   onLike?: () => void;
   isLiked?: boolean;
 }
-
-import { useSWRConfig } from 'swr';
-import { doc, getDoc } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
 
 export default function CommunityPostCard({ post, onLike, isLiked }: CommunityPostCardProps) {
   const { mutate } = useSWRConfig();
@@ -32,27 +31,26 @@ export default function CommunityPostCard({ post, onLike, isLiked }: CommunityPo
       const docRef = doc(db, 'community_posts', post.id);
       const snap = await getDoc(docRef);
       if (!snap.exists()) return null;
-      // Note: In a real app, we'd ensure this data matches the detail page's expectations
       return { ...snap.data(), id: snap.id };
     }, { revalidate: false });
   };
 
   return (
-    <div 
-      className="group py-8 border-b border-border last:border-none animate-fade-in"
+    <div
+      className="group py-8 border-b border-border last:border-none"
       onMouseEnter={prefetchPost}
     >
       <div className="flex justify-between gap-8">
         <div className="flex-1 min-w-0">
-          {/* Author info */}
+          {/* Author */}
           <div className="flex items-center gap-2 mb-3">
             <div className="w-6 h-6 rounded-full bg-brand-ember flex items-center justify-center text-white text-[10px] font-bold overflow-hidden">
               {post.authorPhoto ? (
-                <OptimizedImage 
-                  src={post.authorPhoto} 
-                  alt={post.authorName || 'Author'} 
+                <OptimizedImage
+                  src={post.authorPhoto}
+                  alt={post.authorName || 'Author'}
                   aspectRatio="square"
-                  className="w-full h-full rounded-full object-cover" 
+                  className="w-full h-full rounded-full object-cover"
                 />
               ) : (
                 getInitials(post.authorName || 'T')
@@ -65,7 +63,7 @@ export default function CommunityPostCard({ post, onLike, isLiked }: CommunityPo
             <span className="text-xs text-secondary-text">{timeAgo}</span>
           </div>
 
-          {/* Post content */}
+          {/* Content */}
           <Link href={`/community/post/${post.id}`} className="block group">
             <h2 className="text-2xl font-bold text-primary-text mb-2 leading-tight group-hover:text-brand-ember transition-colors line-clamp-2">
               {post.title}
@@ -75,28 +73,45 @@ export default function CommunityPostCard({ post, onLike, isLiked }: CommunityPo
             </p>
           </Link>
 
-          {/* Metadata & Actions */}
+          {/* Actions */}
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <span className="px-2.5 py-1 rounded-full bg-elevated/5 border border-border text-[10px] font-bold text-secondary-text uppercase tracking-wider">
                 {post.vibeTags?.[0] || 'Discovery'}
               </span>
               <span className="text-xs text-secondary-text">{post.readingTime || '3 min read'}</span>
-              
+
               <div className="flex items-center gap-4 ml-4">
-                <button 
+                {/* Like button — local state drives the visual immediately */}
+                <button
+                  type="button"
                   onClick={(e) => {
                     e.preventDefault();
+                    e.stopPropagation();
                     onLike?.();
                   }}
-                  className={`flex items-center gap-1.5 text-xs transition-all hover:scale-110 ${isLiked ? 'text-brand-ember' : 'text-secondary-text'}`}
+                  className="flex items-center gap-1.5 text-xs"
+                  aria-label={isLiked ? 'Unlike post' : 'Like post'}
                 >
-                  <Heart size={16} className={isLiked ? 'fill-current' : ''} />
-                  <span className="font-bold">{post.likes}</span>
+                  <Heart
+                    size={16}
+                    className="transition-colors duration-150"
+                    style={{
+                      color: isLiked ? '#E8601A' : 'var(--secondary-text)',
+                      fill: isLiked ? '#E8601A' : 'none',
+                    }}
+                  />
+                  <span
+                    className="font-bold transition-colors duration-150"
+                    style={{ color: isLiked ? '#E8601A' : 'var(--secondary-text)' }}
+                  >
+                    {post.likes}
+                  </span>
                 </button>
-                <Link 
+
+                <Link
                   href={`/community/post/${post.id}#comments`}
-                  className="flex items-center gap-1.5 text-xs text-secondary-text hover:text-brand-ember transition-all hover:scale-110"
+                  className="flex items-center gap-1.5 text-xs text-secondary-text hover:text-brand-ember transition-colors duration-150"
                 >
                   <MessageCircle size={16} />
                   <span className="font-bold">{post.commentCount}</span>
@@ -105,20 +120,24 @@ export default function CommunityPostCard({ post, onLike, isLiked }: CommunityPo
             </div>
 
             <div className="flex items-center gap-3 text-secondary-text">
-              <button data-coming-soon="Save/bookmark coming soon" type="button" className="hover:text-brand-ember transition-colors"><Bookmark size={18} /></button>
-              <button data-coming-soon="More actions coming soon" type="button" className="hover:text-brand-ember transition-colors"><MoreHorizontal size={18} /></button>
+              <button data-coming-soon="Save/bookmark coming soon" type="button" className="hover:text-brand-ember transition-colors duration-150">
+                <Bookmark size={18} />
+              </button>
+              <button data-coming-soon="More actions coming soon" type="button" className="hover:text-brand-ember transition-colors duration-150">
+                <MoreHorizontal size={18} />
+              </button>
             </div>
           </div>
         </div>
 
-        {/* Post Thumbnail */}
+        {/* Thumbnail */}
         {post.photos && post.photos.length > 0 && (
           <Link href={`/community/post/${post.id}`} className="hidden sm:block shrink-0 w-32 h-32 lg:w-40 lg:h-40 rounded-2xl overflow-hidden shadow-lg hover:shadow-xl transition-all">
-            <OptimizedImage 
-              src={post.photos[0]} 
-              alt={post.title} 
+            <OptimizedImage
+              src={post.photos[0]}
+              alt={post.title}
               aspectRatio="1/1"
-              className="group-hover:scale-105 transition-transform duration-700" 
+              className="group-hover:scale-105 transition-transform duration-700"
             />
           </Link>
         )}

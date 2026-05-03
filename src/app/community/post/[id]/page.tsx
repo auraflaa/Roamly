@@ -48,40 +48,38 @@ export default function PostDetailPage() {
     }
   }, [loading, post]);
 
-  const handleLike = async (e?: React.MouseEvent) => {
+  const handleLike = (e?: React.MouseEvent) => {
     if (e) {
       e.preventDefault();
       e.stopPropagation();
     }
-    
     if (!firebaseUser || !post) return;
-    
-    try {
-      const newIsLiked = !isLiked;
-      setIsLiked(newIsLiked);
-      
-      // Optimistic UI update
-      mutate({
-        post: {
-          ...post,
-          likes: post.likes + (newIsLiked ? 1 : -1),
-          likedBy: newIsLiked 
-            ? [...(post.likedBy || []), firebaseUser.uid]
-            : (post.likedBy || []).filter(uid => uid !== firebaseUser.uid)
-        },
-        comments
-      }, false);
 
-      const result = await toggleLike(post.id, newIsLiked);
+    const newIsLiked = !isLiked;
+    setIsLiked(newIsLiked);
+
+    // Optimistic update — apply immediately, no re-fetch after write
+    mutate({
+      post: {
+        ...post,
+        likes: post.likes + (newIsLiked ? 1 : -1),
+        likedBy: newIsLiked
+          ? [...(post.likedBy || []), firebaseUser.uid]
+          : (post.likedBy || []).filter(uid => uid !== firebaseUser.uid)
+      },
+      comments
+    }, false);
+
+    // Fire-and-forget — roll back only on failure
+    toggleLike(post.id, newIsLiked).then(result => {
       if (!result.success) {
-        console.error("Like failed:", result.error);
-        // Rollback
         setIsLiked(!newIsLiked);
         mutate();
       }
-    } catch (err) {
-      console.error("Liking error:", err);
-    }
+    }).catch(() => {
+      setIsLiked(!newIsLiked);
+      mutate();
+    });
   };
 
   const handleComment = async (e: React.FormEvent) => {
