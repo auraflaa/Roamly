@@ -2,60 +2,65 @@
 
 import React, { useState, useRef } from 'react';
 import { Camera, Loader2, X, Image as ImageIcon } from 'lucide-react';
-import { getUploadUrl, getFileUrl } from '@/app/actions/storage';
+import {
+  COMMUNITY_IMAGE_LIMIT_BYTES,
+  compressImageForFirestore,
+  formatBytes,
+} from '@/lib/firestore-images';
 
 interface ImageUploadProps {
   onUploadComplete: (url: string) => void;
   defaultImage?: string;
   label?: string;
-  folder?: string;
+  maxBytes?: number;
+  maxWidth?: number;
 }
 
-export default function ImageUpload({ onUploadComplete, defaultImage, label = "Cover Image", folder = "community" }: ImageUploadProps) {
+export default function ImageUpload({
+  onUploadComplete,
+  defaultImage,
+  label = "Cover Image",
+  maxBytes = COMMUNITY_IMAGE_LIMIT_BYTES,
+  maxWidth = 900,
+}: ImageUploadProps) {
   const [uploading, setUploading] = useState(false);
   const [preview, setPreview] = useState(defaultImage || '');
+  const [details, setDetails] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Local preview
     const objectUrl = URL.createObjectURL(file);
     setPreview(objectUrl);
     setUploading(true);
+    setDetails('Compressing for Firestore...');
 
     try {
-      // 1. Get pre-signed URL from server
-      const { signedUrl, key } = await getUploadUrl(file.name, file.type, folder);
-
-      // 2. Upload directly to Hugging Face Bucket
-      const uploadResponse = await fetch(signedUrl, {
-        method: 'PUT',
-        body: file,
-        headers: {
-          'Content-Type': file.type,
-        },
+      const result = await compressImageForFirestore(file, {
+        maxBytes,
+        maxWidth,
+        maxHeight: maxWidth,
       });
 
-      if (!uploadResponse.ok) {
-        throw new Error('Upload failed');
-      }
-
-      // 3. Get the public URL
-      const publicUrl = await getFileUrl(key);
-      onUploadComplete(publicUrl);
+      setPreview(result.dataUrl);
+      setDetails(`Stored in Firestore (${formatBytes(result.byteSize)})`);
+      onUploadComplete(result.dataUrl);
     } catch (error) {
       console.error('Upload error:', error);
-      alert('Failed to upload image. Please try again.');
+      alert(error instanceof Error ? error.message : 'Failed to prepare image. Please try again.');
       setPreview(defaultImage || '');
+      setDetails('');
     } finally {
+      URL.revokeObjectURL(objectUrl);
       setUploading(false);
     }
   };
 
   const removeImage = () => {
     setPreview('');
+    setDetails('');
     onUploadComplete('');
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
@@ -99,7 +104,7 @@ export default function ImageUpload({ onUploadComplete, defaultImage, label = "C
             </div>
             <div className="text-center">
               <p className="text-sm font-bold text-primary-text">Click to upload</p>
-              <p className="text-xs text-secondary-text">PNG, JPG up to 10MB</p>
+              <p className="text-xs text-secondary-text">Compressed into Firestore, max {formatBytes(maxBytes)}</p>
             </div>
           </>
         )}
@@ -107,10 +112,14 @@ export default function ImageUpload({ onUploadComplete, defaultImage, label = "C
         {uploading && (
           <div className="absolute inset-0 bg-black/60 backdrop-blur-sm flex flex-col items-center justify-center gap-3">
             <Loader2 className="animate-spin text-white" size={32} />
-            <p className="text-white text-xs font-bold">Uploading to HF Bucket...</p>
+            <p className="text-white text-xs font-bold">Preparing image...</p>
           </div>
         )}
       </div>
+
+      {details && (
+        <p className="text-[11px] font-medium text-secondary-text px-1">{details}</p>
+      )}
 
       <input 
         type="file"

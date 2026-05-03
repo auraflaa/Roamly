@@ -1,10 +1,11 @@
 'use client';
 
 import React, { useState } from 'react';
-import { X, Image as ImageIcon, Sparkles, Loader2, Camera } from 'lucide-react';
+import { X, Sparkles, Loader2 } from 'lucide-react';
 import { createPost } from '@/app/actions/community';
 import { useAuth } from '@/lib/auth-context';
 import { VIBES } from '@/lib/types';
+import ImageUpload from '@/components/ui/ImageUpload';
 
 interface CreatePostModalProps {
   isOpen: boolean;
@@ -18,7 +19,7 @@ export default function CreatePostModal({ isOpen, onClose, onSuccess }: CreatePo
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [selectedVibes, setSelectedVibes] = useState<string[]>([]);
-  const [imageUrl, setImageUrl] = useState(''); // Simple URL for MVP, can be file upload later
+  const [imageUrl, setImageUrl] = useState('');
 
   if (!isOpen) return null;
 
@@ -83,33 +84,11 @@ export default function CreatePostModal({ isOpen, onClose, onSuccess }: CreatePo
         </div>
 
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
-          {/* Image Input */}
-          <div className="space-y-2">
-            <label className="text-xs font-bold text-secondary-text uppercase tracking-widest px-1">Cover Image URL</label>
-            <div className="relative group">
-              <div className="absolute left-4 top-1/2 -translate-y-1/2 text-secondary-text group-focus-within:text-brand-ember transition-colors">
-                <ImageIcon size={18} />
-              </div>
-              <input 
-                type="url"
-                required
-                value={imageUrl}
-                onChange={(e) => setImageUrl(e.target.value)}
-                placeholder="https://unsplash.com/photos/..."
-                className="w-full h-12 bg-elevated/10 border border-border rounded-2xl pl-12 pr-4 text-sm text-primary-text focus:border-brand-ember/50 focus:ring-1 focus:ring-brand-ember/50 outline-none transition-all"
-              />
-            </div>
-            {imageUrl && (
-              <div className="mt-2 aspect-video rounded-2xl overflow-hidden border border-border relative group">
-                <img src={imageUrl} alt="Preview" className="w-full h-full object-cover" />
-                <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                   <p className="text-white text-xs font-bold flex items-center gap-2">
-                     <Camera size={14} /> Preview Mode
-                   </p>
-                </div>
-              </div>
-            )}
-          </div>
+          <ImageUpload
+            label="Cover Image"
+            onUploadComplete={setImageUrl}
+            defaultImage={imageUrl}
+          />
 
           <div className="space-y-2">
             <label className="text-xs font-bold text-secondary-text uppercase tracking-widest px-1">Title</label>

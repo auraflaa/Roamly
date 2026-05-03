@@ -7,8 +7,11 @@ import { Calendar, User, Settings, Star, MapPin, Heart, Shield, LogOut, Check, X
 import OptimizedImage from '@/components/ui/OptimizedImage';
 import { doc, updateDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import { getUploadUrl } from '@/app/actions/storage';
-import { BUCKET_URL } from '@/lib/s3';
+import {
+  AVATAR_IMAGE_LIMIT_BYTES,
+  compressImageForFirestore,
+  formatBytes,
+} from '@/lib/firestore-images';
 
 export default function ProfilePage() {
   const { userData, loading, signOut, refreshUserData } = useAuth();
@@ -72,33 +75,21 @@ export default function ProfilePage() {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Check size (max 2MB)
-    if (file.size > 2 * 1024 * 1024) {
-      alert("Image must be under 2MB");
-      return;
-    }
-
     setIsUploading(true);
     try {
-      // 1. Get pre-signed URL
-      const { signedUrl, key } = await getUploadUrl(file.name, file.type, 'avatars');
-
-      // 2. Upload to HF Bucket
-      const uploadRes = await fetch(signedUrl, {
-        method: 'PUT',
-        body: file,
-        headers: { 'Content-Type': file.type }
+      const { dataUrl, byteSize } = await compressImageForFirestore(file, {
+        maxBytes: AVATAR_IMAGE_LIMIT_BYTES,
+        maxWidth: 360,
+        maxHeight: 360,
+        initialQuality: 0.72,
       });
 
-      if (!uploadRes.ok) throw new Error("Upload failed");
-
-      // 3. Update Firestore
-      const photoURL = `${BUCKET_URL}/${key}`;
-      await updateDoc(doc(db, 'users', userData.uid), { photoURL });
+      await updateDoc(doc(db, 'users', userData.uid), { photoURL: dataUrl });
       await refreshUserData();
+      console.log(`Avatar stored in Firestore (${formatBytes(byteSize)})`);
     } catch (error) {
       console.error('Avatar upload failed:', error);
-      alert('Failed to upload profile picture.');
+      alert(error instanceof Error ? error.message : 'Failed to update profile picture.');
     } finally {
       setIsUploading(false);
     }

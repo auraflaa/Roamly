@@ -5,10 +5,8 @@ import { useAuth } from '@/lib/auth-context';
 import { useRouter } from 'next/navigation';
 import { Users, ShieldAlert, Flag, CheckCircle, Database, Loader2, AlertTriangle, X } from 'lucide-react';
 import { seedDatabase } from '@/lib/seed';
-import { syncCommunityPostsToBucket, syncPhotosToBucket } from '@/app/actions/migrate';
+import { syncPhotosToBucket } from '@/app/actions/migrate';
 import { collection, getCountFromServer, query, where } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
-import BucketTest from '@/components/debug/BucketTest';
 
 export default function AdminDashboard() {
   const { userData } = useAuth();
@@ -66,18 +64,17 @@ export default function AdminDashboard() {
     }
   };
 
-  const handleSyncPhotos = async () => {
+   const handleSyncPhotos = async () => {
     setShowConfirm(false);
     setSyncing(true);
-    setStatusMessage('Syncing images to Hugging Face bucket...');
+    setStatusMessage('Compressing and migrating images to Firestore (Base64)...');
     const result = await syncPhotosToBucket();
     if (isMounted.current) {
-      setSyncing(true);
       setSyncing(false);
       if (result.success) {
-        setStatusMessage(`Sync complete: ${result.photos} images processed across ${result.gems} gems.`);
+        setStatusMessage(`Migration complete! All images are now stored internally in Firestore.`);
       } else {
-        setStatusMessage(`Sync failed: ${result.error}`);
+        setStatusMessage(`Migration failed: ${result.message}`);
       }
       setTimeout(() => {
         if (isMounted.current) setStatusMessage('');
@@ -85,22 +82,6 @@ export default function AdminDashboard() {
     }
   };
 
-  const handleSyncPosts = async () => {
-    setSyncing(true);
-    setStatusMessage('Syncing community post images to HF bucket...');
-    const result = await syncCommunityPostsToBucket();
-    if (isMounted.current) {
-      setSyncing(false);
-      if (result.success) {
-        setStatusMessage(`Sync complete: ${result.photos} post images processed across ${result.posts} posts.`);
-      } else {
-        setStatusMessage(`Sync failed: ${result.error}`);
-      }
-      setTimeout(() => {
-        if (isMounted.current) setStatusMessage('');
-      }, 8000);
-    }
-  };
 
   if (!userData) {
     return (
@@ -179,22 +160,8 @@ export default function AdminDashboard() {
                   {syncing ? <Loader2 size={20} className="animate-spin" /> : <ShieldAlert size={20} />}
                 </div>
                 <div>
-                  <h4 className="font-bold text-brand-ember">Sync Bucket</h4>
-                  <p className="text-xs text-brand-ember/60 mt-1">Migrate all images to HF Bucket storage.</p>
-                </div>
-              </button>
-
-              <button
-                onClick={handleSyncPosts}
-                disabled={syncing || seeding}
-                className="group p-6 rounded-2xl bg-blue-500/5 border border-blue-500/10 hover:bg-blue-500/10 transition-all text-left flex flex-col gap-3"
-              >
-                <div className="w-10 h-10 rounded-xl bg-blue-500 flex items-center justify-center text-white shadow-lg shadow-blue-500/20">
-                  {syncing ? <Loader2 size={20} className="animate-spin" /> : <Database size={20} />}
-                </div>
-                <div>
-                  <h4 className="font-bold text-blue-600">Sync Stories</h4>
-                  <p className="text-xs text-blue-600/60 mt-1">Migrate all story images to HF Bucket.</p>
+                  <h4 className="font-bold text-brand-ember">Sync Assets</h4>
+                  <p className="text-xs text-brand-ember/60 mt-1">Compress and store all images in Firestore.</p>
                 </div>
               </button>
             </div>
@@ -207,8 +174,6 @@ export default function AdminDashboard() {
             )}
           </div>
 
-          <div className="rounded-[32px] bg-surface border border-border overflow-hidden">
-            <BucketTest />
           </div>
         </div>
 
@@ -228,7 +193,7 @@ export default function AdminDashboard() {
               {syncing && (
                 <div className="flex gap-3 text-brand-ember">
                   <span>[LIVE]</span>
-                  <span className="animate-pulse">UPLOADING ASSETS TO HF BUCKET...</span>
+                  <span className="animate-pulse">PROCESSING & COMPRESSING ASSETS...</span>
                 </div>
               )}
             </div>
@@ -254,7 +219,7 @@ export default function AdminDashboard() {
             
             <h3 className="text-3xl font-bold mb-4 text-primary-text">Execute Sync?</h3>
             <p className="text-secondary-text mb-10 leading-relaxed">
-              This process will download all external photos from external URLs and migrate them to your <span className="font-bold text-primary-text">Hugging Face Bucket</span>. This will modify live documents in Firestore.
+              This process will download all external photos, compress them to <span className="font-bold text-primary-text">900px WebP</span>, and store them as Base64 strings directly in <span className="font-bold text-primary-text">Firestore</span>. This will modify live documents.
             </p>
             
             <div className="flex flex-col sm:flex-row gap-4">

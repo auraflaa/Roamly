@@ -20,11 +20,10 @@ export function useGems(options: { limit?: number; vibe?: string } = {}) {
           limit(options.limit || 20)
         );
         const snap = await getDocs(q);
-        if (snap.empty) return SEED_GEMS as unknown as Gem[];
         return snap.docs.map(d => ({ ...d.data(), id: d.id } as Gem));
       } catch (err) {
         console.error('Error fetching gems:', err);
-        return SEED_GEMS as unknown as Gem[];
+        return [];
       }
     },
     {
@@ -81,7 +80,6 @@ export function useGuides(city?: string) {
         limit(5)
       );
       const snap = await getDocs(q);
-      if (snap.empty) return SEED_GUIDES.slice(0, 3) as unknown as Guide[];
       return snap.docs.map(d => ({ ...d.data(), uid: d.id } as Guide));
     },
     {

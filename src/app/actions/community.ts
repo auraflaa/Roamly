@@ -3,6 +3,8 @@
 import { db } from '@/lib/firebase';
 import { collection, addDoc, serverTimestamp, doc, updateDoc, increment, arrayUnion, arrayRemove } from 'firebase/firestore';
 
+const COMMUNITY_IMAGE_LIMIT_BYTES = 620 * 1024;
+
 export interface PostData {
   authorId: string;
   authorName: string;
@@ -17,11 +19,33 @@ export interface PostData {
   readingTime?: string;
 }
 
+function getUtf8Bytes(value: string) {
+  return Buffer.byteLength(value, 'utf8');
+}
+
+function validateFirestorePhotos(photos: string[]) {
+  if (photos.length > 1) {
+    throw new Error('Community posts support one Firestore image in prototype mode.');
+  }
+
+  for (const photo of photos) {
+    if (!photo.startsWith('data:image/')) {
+      throw new Error('Please upload an image instead of pasting an external URL.');
+    }
+
+    if (getUtf8Bytes(photo) > COMMUNITY_IMAGE_LIMIT_BYTES) {
+      throw new Error('Image is too large for Firestore prototype storage.');
+    }
+  }
+}
+
 /**
  * Creates a new community post in Firestore
  */
 export async function createPost(data: PostData) {
   try {
+    validateFirestorePhotos(data.photos || []);
+
     const postsCol = collection(db, 'community_posts');
     const docRef = await addDoc(postsCol, {
       ...data,

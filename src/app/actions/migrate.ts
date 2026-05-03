@@ -8,236 +8,137 @@ import {
   doc 
 } from 'firebase/firestore/lite';
 import app from '@/lib/firebase';
-import { s3Client, BUCKET_NAME, PROJECT_FOLDER, HF_OWNER } from '@/lib/s3';
-import { PutObjectCommand } from '@aws-sdk/client-s3';
-
 import { Buffer } from 'node:buffer';
 import https from 'node:https';
 import fs from 'node:fs';
 import path from 'node:path';
+import sharp from 'sharp';
 
-// Use Lite SDK for server-side migration to avoid gRPC ECONNRESET issues
+// Use Lite SDK for server-side migration
 const db = getFirestore(app, "talk-with-zeno");
 
-// Create an HTTPS agent that ignores SSL certificate issues for public images
 const httpsAgent = new https.Agent({
   rejectUnauthorized: false
 });
 
 /**
- * Helper to add a delay between operations
+ * Downloads an image with retry logic
  */
-const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
-
-/**
- * Downloads an image with retry logic and browser headers
- */
-async function downloadImageWithRetry(url: string, retries = 2): Promise<Buffer> {
-  let currentUrl = url;
-  
-  // Bypass SSL issues globally for this session
-  process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
-  
-  for (let attempt = 0; attempt <= retries; attempt++) {
-    console.log(`[SYNC] ---> Attempt ${attempt + 1}: Downloading ${currentUrl.substring(0, 60)}...`);
-    
+async function downloadImageWithRetry(url: string, retries = 3): Promise<Buffer> {
+  for (let i = 0; i < retries; i++) {
     try {
-      const buffer = await new Promise<Buffer>((resolve, reject) => {
-        const req = https.get(currentUrl, { timeout: 15000 }, (res) => {
-          if (res.statusCode === 301 || res.statusCode === 302 || res.statusCode === 307 || res.statusCode === 308) {
-            const nextUrl = res.headers.location;
-            if (nextUrl) {
-              currentUrl = nextUrl.startsWith('http') ? nextUrl : new URL(nextUrl, currentUrl).toString();
-              reject(new Error('REDIRECT'));
-              return;
-            }
+      return await new Promise((resolve, reject) => {
+        https.get(url, { agent: httpsAgent }, (res) => {
+          if (res.statusCode === 301 || res.statusCode === 302) {
+            return downloadImageWithRetry(res.headers.location!, retries - i).then(resolve).catch(reject);
           }
-          
           if (res.statusCode !== 200) {
-            reject(new Error(`HTTP_STATUS_${res.statusCode}`));
+            reject(new Error(`Failed: ${res.statusCode}`));
             return;
           }
-
-          const chunks: Buffer[] = [];
-          res.on('data', (chunk) => chunks.push(Buffer.from(chunk)));
+          const chunks: any[] = [];
+          res.on('data', (chunk) => chunks.push(chunk));
           res.on('end', () => resolve(Buffer.concat(chunks)));
-          res.on('error', (e) => reject(new Error(`STREAM_ERROR: ${e.message}`)));
-        });
-
-        req.on('error', (e) => reject(new Error(`REQUEST_ERROR: ${e.message}`)));
-        req.on('timeout', () => {
-          req.destroy();
-          reject(new Error('TIMEOUT'));
-        });
+          res.on('error', reject);
+        }).on('error', reject);
       });
-
-      console.log(`[SYNC] Success! Downloaded ${buffer.length} bytes.`);
-      return buffer;
-    } catch (err: any) {
-      if (err.message === 'REDIRECT') {
-        console.log(`[SYNC] Redirected to: ${currentUrl.substring(0, 60)}...`);
-        attempt--; 
-        continue;
-      }
-      
-      console.warn(`[SYNC] Attempt ${attempt + 1} failed. Error:`, err.message || err);
-      if (attempt === retries) throw err;
-      await sleep(2000 * (attempt + 1));
+    } catch (err) {
+      if (i === retries - 1) throw err;
+      await new Promise(r => setTimeout(r, 1000));
     }
   }
-  throw new Error('MAX_RETRIES_EXCEEDED');
+  throw new Error('Retries failed');
 }
 
 /**
- * Migration Script: Downloads existing external photos and uploads them to HF Bucket.
- * PRODUCTION READY: Includes retries, rate-limiting, and validation.
+ * Compresses an image and returns a Base64 string
  */
+async function processImage(url: string, localFolder: string, id: string, index: number): Promise<string> {
+  let buffer: Buffer;
+
+  // Try local first
+  const localPath = path.join(process.cwd(), 'data', 'migration', localFolder, id, `photo-${index}.jpg`);
+  if (fs.existsSync(localPath)) {
+    console.log(`[SYNC] Using local file for ${id} photo-${index}`);
+    buffer = fs.readFileSync(localPath);
+  } else {
+    console.log(`[SYNC] Downloading ${url}...`);
+    buffer = await downloadImageWithRetry(url);
+  }
+
+  // Compress to WebP
+  const compressed = await sharp(buffer)
+    .resize(900, 900, { fit: 'inside', withoutEnlargement: true }) // Optimized for Firestore document limits
+    .webp({ quality: 80 }) 
+    .toBuffer();
+  
+  return `data:image/webp;base64,${compressed.toString('base64')}`;
+}
+
 export async function syncPhotosToBucket() {
-  console.log('[SYNC] Starting Gem sync...');
+  console.log('[SYNC] Starting Firestore Base64 Migration...');
+
   try {
-    const gemsCol = collection(db, 'gems');
-    console.log('[SYNC] Fetching Gem documents...');
-    const snapshot = await getDocs(gemsCol);
+    // 1. Process Gems
+    const snapshot = await getDocs(collection(db, 'gems'));
     console.log(`[SYNC] Found ${snapshot.size} gems.`);
-    
-    let photoCount = 0;
-    let gemCount = 0;
 
     for (const gemDoc of snapshot.docs) {
-      const data = gemDoc.data();
       const gemId = gemDoc.id;
-      const currentPhotos = data.photos || [];
-      const newBucketUrls: string[] = [];
+      const photos = gemDoc.data().photos || [];
+      const newPhotos: string[] = [];
 
-      console.log(`[SYNC] Processing Gem: ${gemId} (${gemCount + 1}/${snapshot.size})`);
-
-      for (let i = 0; i < currentPhotos.length; i++) {
-        const url = currentPhotos[i];
-        
-        if (!url) {
-          console.warn(`[SYNC] Skipping empty URL at index ${i} for gem ${gemId}`);
-          continue;
-        }
-
-        console.log(`[SYNC] Processing URL: ${url.substring(0, 60)}...`);
-
-        // Skip if already in bucket
-        if (url.includes('huggingface.co/buckets')) {
-          newBucketUrls.push(url);
+      console.log(`[SYNC] Processing Gem: ${gemId}`);
+      for (let i = 0; i < photos.length; i++) {
+        const url = photos[i];
+        if (url.startsWith('data:image')) {
+          newPhotos.push(url);
           continue;
         }
 
         try {
-          // 1. Download with retry
-          const imageBuffer = await downloadImageWithRetry(url);
-          const key = `gems/${gemId}/photo-${i}.jpg`;
-          const localPath = path.join(process.cwd(), 'data', 'migration', key);
-          const localDir = path.dirname(localPath);
-
-          // Ensure local directory exists
-          if (!fs.existsSync(localDir)) {
-            fs.mkdirSync(localDir, { recursive: true });
-          }
-
-          console.log(`[SYNC] Saving locally: ${localPath}...`);
-          fs.writeFileSync(localPath, imageBuffer);
-
-          const bucketUrl = `https://huggingface.co/buckets/${HF_OWNER}/${BUCKET_NAME}/${key}`;
-          newBucketUrls.push(bucketUrl);
-          photoCount++;
-          console.log(`[SYNC] Success! Saved photo-${i} for gem ${gemId}`);
-          
-          // Rate limiting to be polite to external servers
-          await sleep(200); 
-        } catch (err: any) {
-          console.error(`[SYNC] !!! UPLOAD FAILED for gem ${gemId} photo ${i}:`, err.message || err);
-          console.warn(`[SYNC] Skipping photo ${i} for gem ${gemId} due to upload failure.`);
-          newBucketUrls.push(url); 
+          const b64 = await processImage(url, 'gems', gemId, i);
+          newPhotos.push(b64);
+        } catch (e) {
+          console.error(`[SYNC] Error processing gem ${gemId}:`, e);
+          newPhotos.push(url);
         }
       }
 
-      // 3. Update Firestore
-      await updateDoc(doc(db, 'gems', gemId), {
-        photos: newBucketUrls,
-        updatedAt: new Date().toISOString()
-      });
-      
-      gemCount++;
+      await updateDoc(doc(db, 'gems', gemId), { photos: newPhotos });
     }
 
-    return { success: true, gems: gemCount, photos: photoCount };
-  } catch (error: any) {
-    console.error('Photo sync failed:', error);
-    return { success: false, error: error.message };
-  }
-}
+    // 2. Process Posts
+    const postsSnapshot = await getDocs(collection(db, 'posts'));
+    console.log(`[SYNC] Found ${postsSnapshot.size} posts.`);
 
-/**
- * Syncs community post photos to the HF Bucket.
- */
-export async function syncCommunityPostsToBucket() {
-  console.log('[SYNC] Starting Post sync...');
-  try {
-    const postsCol = collection(db, 'community_posts');
-    console.log('[SYNC] Fetching Post documents...');
-    const snapshot = await getDocs(postsCol);
-    console.log(`[SYNC] Found ${snapshot.size} posts.`);
-    
-    let photoCount = 0;
-    let postCount = 0;
-
-    for (const postDoc of snapshot.docs) {
-      const data = postDoc.data();
+    for (const postDoc of postsSnapshot.docs) {
       const postId = postDoc.id;
-      const currentPhotos = data.photos || [];
-      const newBucketUrls: string[] = [];
+      const photos = postDoc.data().photos || [];
+      const newPhotos: string[] = [];
 
-      console.log(`[SYNC] Processing Post: ${postId} (${postCount + 1}/${snapshot.size})`);
-
-      for (let i = 0; i < currentPhotos.length; i++) {
-        const url = currentPhotos[i];
-        
-        if (url.includes('huggingface.co/buckets')) {
-          newBucketUrls.push(url);
+      console.log(`[SYNC] Processing Post: ${postId}`);
+      for (let i = 0; i < photos.length; i++) {
+        const url = photos[i];
+        if (url.startsWith('data:image')) {
+          newPhotos.push(url);
           continue;
         }
 
         try {
-          const imageBuffer = await downloadImageWithRetry(url);
-          const key = `community/${postId}/photo-${i}.jpg`;
-          const localPath = path.join(process.cwd(), 'data', 'migration', key);
-          const localDir = path.dirname(localPath);
-
-          // Ensure local directory exists
-          if (!fs.existsSync(localDir)) {
-            fs.mkdirSync(localDir, { recursive: true });
-          }
-
-          console.log(`[SYNC] Saving locally: ${localPath}...`);
-          fs.writeFileSync(localPath, imageBuffer);
-
-          const bucketUrl = `https://huggingface.co/buckets/${HF_OWNER}/${BUCKET_NAME}/${key}`;
-          newBucketUrls.push(bucketUrl);
-          console.log(`[SYNC] Success! Saved photo-${i} for post ${postId}`);
-          
-        } catch (err: any) {
-          console.error(`[SYNC] !!! UPLOAD FAILED for post ${postId} photo ${i}:`, err.message || err);
-          console.warn(`[SYNC] Skipping photo ${i} for post ${postId} due to upload failure.`);
-          newBucketUrls.push(url); 
+          const b64 = await processImage(url, 'community', postId, i);
+          newPhotos.push(b64);
+        } catch (e) {
+          console.error(`[SYNC] Error processing post ${postId}:`, e);
+          newPhotos.push(url);
         }
       }
 
-      await updateDoc(doc(db, 'community_posts', postId), {
-        photos: newBucketUrls,
-        updatedAt: new Date().toISOString()
-      });
-      
-      postCount++;
+      await updateDoc(doc(db, 'posts', postId), { photos: newPhotos });
     }
 
-    return { success: true, posts: postCount, photos: photoCount };
+    return { success: true, message: 'All photos compressed and stored in Firestore!' };
   } catch (error: any) {
-    console.error('Post sync failed:', error);
-    return { success: false, error: error.message };
+    return { success: false, message: error.message };
   }
 }
