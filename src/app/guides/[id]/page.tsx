@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { doc, getDoc, collection, query, where, getDocs, limit } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Star, MapPin, Globe, ShieldCheck, Heart, Share2, ArrowLeft, MessageSquare, Calendar, ChevronRight, Award, Sparkles } from 'lucide-react';
+import OptimizedImage from '@/components/ui/OptimizedImage';
 import { SEED_GUIDES } from '@/lib/seed';
 import type { Guide, Gem } from '@/lib/types';
 import GemCard from '@/components/cards/GemCard';
@@ -86,9 +87,10 @@ export default function GuideProfilePage() {
             {/* Profile Photo */}
             <div className="relative group">
               <div className="w-32 h-32 lg:w-48 lg:h-48 rounded-[48px] overflow-hidden border-4 border-brand-ember/20 shadow-2xl transition-transform group-hover:scale-105 duration-500">
-                <img 
+                <OptimizedImage 
                   src={guide.photoURL || `https://api.dicebear.com/7.x/avataaars/svg?seed=${guide.uid}`} 
-                  alt={guide.displayName}
+                  alt={guide.displayName || 'Guide'}
+                  aspectRatio="square"
                   className="w-full h-full object-cover"
                 />
               </div>

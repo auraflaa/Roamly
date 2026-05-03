@@ -12,68 +12,29 @@ import { useAuth } from '@/lib/auth-context';
 import { createBooking } from '@/app/actions/booking';
 import { trackInteraction } from '@/app/actions/personalization';
 
+import { useGem, useGuides } from '@/lib/hooks/use-gems';
+
 export default function GemDetailPage() {
   const params = useParams();
   const router = useRouter();
   const { firebaseUser, userData } = useAuth();
-  const [gem, setGem] = useState<Gem | null>(null);
-  const [guides, setGuides] = useState<(Guide & { displayName?: string })[]>([]);
-  const [loading, setLoading] = useState(true);
+  
+  const id = params?.id as string;
+  const { gem, isLoading: gemLoading } = useGem(id);
+  const { guides, isLoading: guidesLoading } = useGuides(gem?.location.city);
+  
   const [currentPhoto, setCurrentPhoto] = useState(0);
   const [isSaved, setIsSaved] = useState(false);
-  const [bookingStatus, setBookingStatus] = useState<'idle' | 'booking' | 'success' | 'error'>('idle');
+  const [bookingStatus, setBookingStatus] = useState<'idle' | 'booking' | 'success' | 'error' | 'not-supported'>('idle');
   const [selectedGuide, setSelectedGuide] = useState<string | null>(null);
 
+  const loading = gemLoading || (gem && guidesLoading);
+
   useEffect(() => {
-    if (params?.id) {
-      loadGem();
+    if (firebaseUser && gem?.vibes?.[0]) {
+      trackInteraction(firebaseUser.uid, gem.vibes[0], 'view');
     }
-  }, [params?.id]);
-
-  const loadGem = async () => {
-    setLoading(true);
-    try {
-      const gemDoc = await getDoc(doc(db, 'gems', params.id as string));
-      let gemData: Gem | null = null;
-      
-      if (gemDoc.exists()) {
-        gemData = { ...gemDoc.data(), id: gemDoc.id } as Gem;
-      } else {
-        const seedGem = SEED_GEMS.find(g => g.id === params.id);
-        if (seedGem) gemData = seedGem as unknown as Gem;
-      }
-      
-      setGem(gemData);
-
-      // Track view for personalization
-      if (firebaseUser && gemData?.vibes?.[0]) {
-        trackInteraction(firebaseUser.uid, gemData.vibes[0], 'view');
-      }
-
-      // Smart Matching: Find guides in the same city
-      if (gemData?.location.city) {
-        const guidesQuery = query(
-          collection(db, 'guides'),
-          where('city', '==', gemData.location.city),
-          limit(5)
-        );
-        const guideSnap = await getDocs(guidesQuery);
-        if (!guideSnap.empty) {
-          setGuides(guideSnap.docs.map(d => ({ ...d.data(), uid: d.id } as Guide)));
-        } else {
-          // Fallback to random seed guides if no city match in DB
-          setGuides(SEED_GUIDES.slice(0, 3) as unknown as Guide[]);
-        }
-      }
-    } catch (err) {
-      console.error("Load error:", err);
-      const seedGem = SEED_GEMS.find(g => g.id === params.id);
-      if (seedGem) setGem(seedGem as unknown as Gem);
-      setGuides(SEED_GUIDES.slice(0, 3) as unknown as Guide[]);
-    } finally {
-      setLoading(false);
-    }
-  };
+  }, [firebaseUser, gem?.id]);
 
   const [bookingMode, setBookingMode] = useState<'self' | 'in-person'>('in-person');
 
@@ -115,9 +76,11 @@ export default function GemDetailPage() {
     <div className="max-w-[1280px] mx-auto animate-fade-in">
       {/* Photo Carousel */}
       <div className="relative h-[300px] sm:h-[400px] lg:h-[500px] lg:mx-6 lg:mt-6 lg:rounded-[40px] overflow-hidden shadow-2xl">
-        <div
-          className="w-full h-full bg-cover bg-center transition-all duration-700"
-          style={{ backgroundImage: `url(${gem.photos[currentPhoto]})`, backgroundColor: 'var(--surface)' }}
+        <OptimizedImage 
+          src={gem.photos[currentPhoto]} 
+          alt={gem.title}
+          aspectRatio="unset"
+          className="w-full h-full object-cover transition-all duration-700"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/20" />
 
@@ -145,7 +108,7 @@ export default function GemDetailPage() {
         {/* Info Overlay */}
         <div className="absolute bottom-10 left-10 right-10">
            <div className="flex gap-2 mb-4">
-            {gem.vibes.map(vibe => (
+            {Array.from(new Set(gem.vibes)).map(vibe => (
               <span key={vibe} className="px-4 py-1.5 rounded-full text-xs font-bold backdrop-blur-md bg-white/10 text-white border border-white/20">
                 {vibe}
               </span>
@@ -435,7 +398,7 @@ export default function GemDetailPage() {
 
       {/* Success Modal */}
       {bookingStatus === 'success' && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[var(--overlay-bg)] backdrop-blur-md animate-in fade-in">
           <div className="max-w-md w-full bg-card border border-border rounded-[40px] p-10 text-center shadow-2xl relative overflow-hidden">
             <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-brand-ember to-brand-sienna" />
             <div className="w-20 h-20 rounded-3xl bg-green-500/20 flex items-center justify-center mx-auto mb-8 text-green-500">
@@ -443,7 +406,7 @@ export default function GemDetailPage() {
             </div>
             <h3 className="text-3xl font-bold mb-4 text-primary-text">Request Sent!</h3>
             <p className="text-secondary-text mb-8">
-              Your match request for **{gem.title}** has been sent to our local experts. They'll reach out to finalize your itinerary!
+              Your match request for <span className="font-bold text-primary-text">{gem.title}</span> has been sent to our local experts. They'll reach out to finalize your itinerary!
             </p>
             <button
               onClick={() => setBookingStatus('idle')}

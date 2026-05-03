@@ -6,7 +6,7 @@
 
 import { initializeApp, getApps } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
-import { getFirestore } from 'firebase/firestore';
+import { getFirestore, initializeFirestore } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
 
 /**
@@ -29,21 +29,36 @@ const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0
 
 /**
  * Firebase Authentication instance.
- * @const {Auth}
  */
 export const auth = getAuth(app);
 
 /**
  * Cloud Firestore database instance.
  * Note: Configured to use the specific "talk-with-zeno" named database.
- * @const {Firestore}
+ * Optimized with long-polling to prevent GrpcConnection ECONNRESET errors.
  */
-export const db = getFirestore(app, "talk-with-zeno");
+export const db = initializeFirestore(app, {
+  experimentalForceLongPolling: true,
+}, "talk-with-zeno");
+
+// Enable multi-tab persistence for high-performance client-side caching
+if (typeof window !== 'undefined') {
+  import('firebase/firestore').then(({ enableMultiTabIndexedDbPersistence }) => {
+    enableMultiTabIndexedDbPersistence(db).catch((err) => {
+      if (err.code === 'failed-precondition') {
+        // Multiple tabs open, persistence can only be enabled in one tab at a time.
+        console.warn('Firestore persistence failed: Multiple tabs open');
+      } else if (err.code === 'unimplemented') {
+        // The current browser does not support all of the features required to enable persistence
+        console.warn('Firestore persistence failed: Browser not supported');
+      }
+    });
+  });
+}
 
 /**
  * Cloud Storage instance.
  * Primarily used for profile avatars and gem images.
- * @const {FirebaseStorage}
  */
 export const storage = getStorage(app);
 

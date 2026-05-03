@@ -5,10 +5,13 @@ import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Eye, EyeOff, Mail, Lock, User, Compass, Map } from 'lucide-react';
 import Image from 'next/image';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@/lib/auth-context';
+import { useThemeStore } from '@/lib/store';
 
 function SignupForm() {
   const router = useRouter();
+  const { theme } = useThemeStore();
   const searchParams = useSearchParams();
   const { signUp, signInWithGoogle } = useAuth();
   const [name, setName] = useState('');
@@ -64,16 +67,28 @@ function SignupForm() {
 
       <div className="relative w-full max-w-md animate-slide-up">
         <div className="text-center mb-8">
-          <Link href="/" className="inline-flex items-center gap-2 mb-4">
-            <div className="relative w-10 h-10 rounded-xl overflow-hidden shadow-lg shadow-brand-ember/20">
-              <Image 
-                src="/logos/non-transparent/07_icon_orange_bg.png" 
-                alt="Roamly Icon" 
-                fill
-                className="object-contain"
-              />
+          <Link href="/" className="inline-flex items-center group">
+            <div className="relative w-40 h-12 transition-transform duration-300 group-hover:scale-105">
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={theme}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.3 }}
+                  className="absolute inset-0"
+                >
+                  <Image 
+                    src={theme === 'dark' ? "/assets/logos/02_horizontal_lockup_dark.png" : "/assets/logos/01_horizontal_lockup_light.png"}
+                    alt="Roamly Logo" 
+                    fill
+                    sizes="160px"
+                    className="object-contain"
+                    priority
+                  />
+                </motion.div>
+              </AnimatePresence>
             </div>
-            <span className="text-h1 font-semibold" style={{ color: 'var(--primary-text)' }}>Roamly</span>
           </Link>
           <p className="text-body" style={{ color: 'var(--secondary-text)' }}>Begin your journey</p>
         </div>

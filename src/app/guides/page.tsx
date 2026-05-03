@@ -1,41 +1,18 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { collection, getDocs, query, where } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import React, { useState } from 'react';
 import { Search } from 'lucide-react';
 import GuideCard from '@/components/cards/GuideCard';
 import { SkeletonGuideCard } from '@/components/ui/Skeleton';
 import type { Guide } from '@/lib/types';
 import { SEED_GUIDES } from '@/lib/seed';
 
+import { useGuides } from '@/lib/hooks/use-gems';
+import OptimizedImage from '@/components/ui/OptimizedImage';
+
 export default function GuidesPage() {
-  const [guides, setGuides] = useState<(Guide & { displayName?: string })[]>([]);
-  const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
-
-  useEffect(() => {
-    loadGuides();
-  }, []);
-
-  const loadGuides = async () => {
-    setLoading(true);
-    try {
-      const q = query(collection(db, 'guides'), where('verificationStatus', '==', 'approved'));
-      const snap = await getDocs(q);
-      if (snap.empty) {
-        setGuides(SEED_GUIDES as unknown as (Guide & { displayName?: string })[]);
-      } else {
-        // Merge with user display names
-        const guideData = snap.docs.map(d => ({ ...d.data(), uid: d.id } as Guide & { displayName?: string }));
-        setGuides(guideData);
-      }
-    } catch {
-      setGuides(SEED_GUIDES as unknown as (Guide & { displayName?: string })[]);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const { guides, isLoading: loading } = useGuides(); // Fetches all approved guides
 
   const filtered = guides.filter(g => {
     if (!searchQuery) return true;

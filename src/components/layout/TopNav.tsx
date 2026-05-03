@@ -8,6 +8,7 @@ import { Sun, Moon, Menu, X, LogOut, Shield } from 'lucide-react';
 import Image from 'next/image';
 import { useAuth } from '@/lib/auth-context';
 import { useThemeStore } from '@/lib/store';
+import OptimizedImage from '@/components/ui/OptimizedImage';
 
 const navLinks = [
   { href: '/explore', label: 'Explore' },
@@ -44,22 +45,28 @@ export default function TopNav() {
         }`}
       >
         <div className="max-w-[1280px] mx-auto px-4 lg:px-6 h-16 flex items-center justify-between">
-          {/* Logo */}
-          <Link href="/" className="flex items-center gap-2.5 group">
-            <div className="relative w-9 h-9 rounded-xl overflow-hidden group-hover:scale-105 transition-transform duration-300">
-              <Image 
-                src="/logos/non-transparent/07_icon_orange_bg.png" 
-                alt="Roamly Icon" 
-                fill
-                className="object-contain"
-              />
+          <Link href="/" className="flex items-center group">
+            <div className="relative w-32 h-10 transition-transform duration-300 group-hover:scale-105">
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={isTransparent || theme === 'dark' ? 'dark-logo' : 'light-logo'}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.3 }}
+                  className="absolute inset-0"
+                >
+                  <Image 
+                    src={isTransparent || theme === 'dark' ? "/assets/logos/02_horizontal_lockup_dark.png" : "/assets/logos/01_horizontal_lockup_light.png"}
+                    alt="Roamly Logo" 
+                    fill
+                    sizes="128px"
+                    className="object-contain"
+                    priority
+                  />
+                </motion.div>
+              </AnimatePresence>
             </div>
-            <span 
-              className={`text-h3 font-bold tracking-tight transition-colors duration-300`}
-              style={{ color: isTransparent ? 'white' : 'var(--primary-text)' }}
-            >
-              Roamly
-            </span>
           </Link>
 
           {/* Desktop Nav */}
@@ -127,7 +134,12 @@ export default function TopNav() {
                   className="w-8 h-8 rounded-full bg-brand-ember flex items-center justify-center text-white text-xs font-bold hover:scale-105 transition-transform overflow-hidden shadow-sm"
                 >
                   {userData.photoURL ? (
-                    <img src={userData.photoURL} alt={userData.displayName} className="w-full h-full object-cover" />
+                    <OptimizedImage 
+                      src={userData.photoURL} 
+                      alt={userData.displayName} 
+                      aspectRatio="square"
+                      className="w-full h-full object-cover" 
+                    />
                   ) : (
                     userData.displayName?.[0]?.toUpperCase() || 'U'
                   )}

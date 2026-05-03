@@ -9,6 +9,11 @@ const VIBES = ['Adventure', 'Nature', 'Food', 'Culture', 'Spiritual', 'Relaxatio
 
 const CITIES = ['Jaipur', 'Goa', 'Mumbai', 'Agra', 'Varanasi', 'Udaipur', 'Kochi', 'Delhi', 'Ladakh', 'Hampi'];
 
+const REAL_GUIDE_NAMES = [
+  'Arjun Sharma', 'Priya Nair', 'Vikram Mehta', 'Ananya Iyer', 'Zaid Khan', 
+  'Meera Deshmukh', 'Rahul Verma', 'Sneha Kapoor', 'Amit Das', 'Kavita Reddy'
+];
+
 const PHOTOS = [
   'https://images.unsplash.com/photo-1477959858617-67f85cf4f1df?auto=format&fit=crop&q=80&w=1000',
   'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&q=80&w=1000',
@@ -28,21 +33,21 @@ const PHOTOS = [
 ];
 
 const GEM_TITLES = [
-  'Secret Rooftop Sunset', 'Forgotten Temple Path', 'Local Artisan Workshop', 'Hidden Waterfall Cave', 
-  'Abandoned Colonial Mansion', 'Underground Jazz Den', 'Moonlight Canal Cruise', 'Spice Garden Sanctuary',
-  'Ancient Stepwell View', 'Mystic Banyan Tree', 'Fisherman\'s Dawn Market', 'Backstreet Mural Walk',
-  'Secluded Hilltop Shrine', 'Legacy Weaver\'s Studio', 'Old City Tea Tavern'
+  'Emerald Garden Sanctuary', 'Echoing Steps of Nahargarh', 'The Weaver\'s Hidden Loft', 'Citrus Blossom Courtyard', 
+  'Abandoned Haveli of Chandni Chowk', 'Midnight Jazz at Blue Note', 'Lotus Pond Meditation Grove', 'Saffron & Silk Spice Walk',
+  'Ancient Panna Meena View', 'Banyan Tree Spirit Shrine', 'Netted Dawn: Fisherman\'s Cove', 'Backstreet Mural Odyssey',
+  'Secluded Hilltop Pagoda', 'The Indigo Master\'s Studio', 'Old City Masala Tavern'
 ];
 
 const DESCRIPTIONS = [
-  'A peaceful spot known only to residents, offering the best views of the city skyline during golden hour.',
-  'An ancient architectural marvel tucked away from the main tourist trail, perfect for quiet reflection.',
-  'Meet local master craftsmen who have been practicing their trade for over four generations.',
-  'A stunning natural wonder that requires a short hike but rewards you with complete serenity.',
-  'Explore the remnants of history in this beautifully preserved yet forgotten landmark.',
-  'The heart of the local music scene where legends play in an intimate, low-lit basement.',
-  'Experience the city from a different perspective as you glide through historic waterways.',
-  'Learn about the origins of traditional medicine and culinary staples in this lush sanctuary.',
+  'A serene escape known only to heritage conservationists, offering a panoramic view of the ancient city walls as the sky turns to fire.',
+  'An 11th-century architectural masterpiece tucked away from the main safari trail, where the silence is only broken by the temple bells.',
+  'Sit with 4th-generation National Award-winning artisans as they reveal the meditative process of block printing and natural dyes.',
+  'A cascading oasis that requires a trek through teak forests, rewarding explorers with crystal-clear pools and absolute solitude.',
+  'Navigate the crumbling grandeur of a merchant\'s mansion, where stained glass and teak beams whisper stories of a forgotten golden age.',
+  'The pulse of the city\'s bohemian underground. No stage, just raw talent and the smell of old wood and vinyl.',
+  'A journey through the twilight canals, passing under low bridges where the water reflects the flickering oil lamps of the old town.',
+  'An aromatic sanctuary where rare botanicals are cultivated using centuries-old organic techniques passed down through generations.',
 ];
 
 // Generate 100 Gems
@@ -58,7 +63,7 @@ const SEED_GEMS = Array.from({ length: 100 }, (_, i) => ({
     city: CITIES[i % CITIES.length], 
     nearestLandmark: 'Local Center' 
   },
-  vibes: [VIBES[i % VIBES.length], VIBES[(i + 2) % VIBES.length]],
+  vibes: Array.from(new Set([VIBES[i % VIBES.length], VIBES[(i + 2) % VIBES.length]])),
   bestTime: { timeOfDay: 'Morning', season: 'Any' },
   whatToBring: ['Water', 'Camera', 'Curiosity'],
   isCommunityGem: i % 5 === 0,
@@ -71,17 +76,17 @@ const SEED_GEMS = Array.from({ length: 100 }, (_, i) => ({
   createdAt: Timestamp.now(),
   localHeart: CITIES[i % CITIES.length] === 'Delhi' ? {
     note: "I grew up exploring these hidden corners. To me, this isn't just a destination—it's a story of our heritage that most tourists never get to hear. I can't wait to show you the real Delhi.",
-    guideName: `Guide Name ${(i % 10) + 1}`,
+    guideName: REAL_GUIDE_NAMES[i % REAL_GUIDE_NAMES.length],
     guideId: gid('guide', (i % 10) + 1)
-  } : undefined,
+  } : null,
   price: Math.floor(Math.random() * 5000),
 }));
 
 // Generate 10 Guides
 const SEED_GUIDES = Array.from({ length: 10 }, (_, i) => ({
   uid: gid('guide', i + 1),
-  displayName: `Guide Name ${i + 1}`,
-  bio: `Expert guide with years of experience in ${CITIES[i % CITIES.length]}. Specialist in ${VIBES[i % VIBES.length]}.`,
+  displayName: REAL_GUIDE_NAMES[i],
+  bio: `Native of ${CITIES[i % CITIES.length]} with a decade spent unearthing its secrets. Specialist in ${VIBES[i % VIBES.length]} and community storytelling.`,
   languages: [
     { language: 'English', proficiency: 'fluent' as const },
     { language: 'Hindi', proficiency: 'native' as const }
@@ -112,8 +117,8 @@ const SEED_GUIDES = Array.from({ length: 10 }, (_, i) => ({
 // Generate 20 Users
 const SEED_USERS = Array.from({ length: 20 }, (_, i) => ({
   uid: i < 10 ? gid('guide', i + 1) : gid('user', i - 9),
-  email: `user${i + 1}@roamly.com`,
-  displayName: `User ${i + 1}`,
+  email: i < 10 ? `${REAL_GUIDE_NAMES[i].toLowerCase().replace(' ', '.')}@roamly.com` : `traveler.${i - 9}@roamly.com`,
+  displayName: i < 10 ? REAL_GUIDE_NAMES[i] : `Traveler ${i - 9}`,
   role: i < 10 ? 'guide' as const : 'traveler' as const,
   createdAt: Timestamp.now(),
   savedGems: [],
@@ -125,7 +130,7 @@ const SEED_USERS = Array.from({ length: 20 }, (_, i) => ({
 const SEED_COMMUNITY_POSTS = Array.from({ length: 50 }, (_, i) => ({
   id: gid('post', i + 1),
   authorId: i % 2 === 0 ? gid('user', (i % 10) + 1) : gid('guide', (i % 10) + 1),
-  authorName: i % 2 === 0 ? `Traveler ${ (i % 10) + 1 }` : `Expert Guide ${ (i % 10) + 1 }`,
+  authorName: i % 2 === 0 ? `Explorer ${ (i % 10) + 1 }` : REAL_GUIDE_NAMES[i % REAL_GUIDE_NAMES.length],
   photos: [PHOTOS[(i + 5) % PHOTOS.length], PHOTOS[(i + 10) % PHOTOS.length]],
   title: `${GEM_TITLES[i % GEM_TITLES.length]} - A Deep Dive`,
   description: `This discovery changed how I view ${CITIES[i % CITIES.length]}. ${DESCRIPTIONS[i % DESCRIPTIONS.length]}
@@ -133,7 +138,7 @@ const SEED_COMMUNITY_POSTS = Array.from({ length: 50 }, (_, i) => ({
   Walking through the backstreets of ${CITIES[i % CITIES.length]}, you realize that the real magic isn't in the landmarks, but in the people you meet. Mentions: @User-1, @Guide-2.
   
   What I loved most about this experience was the authenticity. There were no tourists around, just the sound of the local artisans working. If you're looking for something truly off the beaten path, this is it.`,
-  vibeTags: [VIBES[i % VIBES.length], 'Authentic', 'Hidden'],
+  vibeTags: Array.from(new Set([VIBES[i % VIBES.length], 'Authentic', 'Hidden'])),
   moderationStatus: 'approved' as const,
   flagCount: 0,
   flaggedBy: [],

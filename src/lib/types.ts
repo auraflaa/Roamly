@@ -129,7 +129,10 @@ export interface CommunityPost {
   gemId?: string;
   photos: string[];
   title: string;
-  description: string;
+  subtitle?: string;
+  description: string; // Brief excerpt for feed
+  content: string;     // Full rich-text or markdown content
+  readingTime?: string;
   locationPin?: { lat: number; lng: number };
   vibeTags: string[];
   moderationStatus: 'pending' | 'approved' | 'rejected' | 'flagged';
@@ -138,6 +141,17 @@ export interface CommunityPost {
   likes: number;
   likedBy: string[];
   commentCount: number;
+  viewCount?: number;
+  createdAt: Timestamp;
+}
+
+export interface Comment {
+  id: string;
+  postId: string;
+  authorId: string;
+  authorName: string;
+  authorPhoto?: string;
+  text: string;
   createdAt: Timestamp;
 }
 

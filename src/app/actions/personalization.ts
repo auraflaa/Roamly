@@ -1,81 +1,125 @@
-/**
- * @file personalization.ts
- * @description Recency-Aware Personalization Engine for Roamly.
- * Handles the calculation of user 'vibe affinities' using a time-decay algorithm
- * to ensure current interests outweigh stale historical data.
- */
+"use server";
 
-import { doc, getDoc, updateDoc } from 'firebase/firestore';
+import { collection, query, orderBy, limit, getDocs, where, doc, updateDoc, getDoc, setDoc, increment } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
+import type { CommunityPost } from '@/lib/types';
 
 /**
- * Represents the affinity a user has for a specific travel 'vibe'.
- * @interface VibeAffinity
- * @property {number} score - The cumulative engagement score (higher = higher affinity).
- * @property {string} lastUpdated - ISO timestamp of the last interaction for decay calculation.
+ * Tracks a user's interaction with a specific vibe or category.
+ * Used to build the personalization profile.
  */
-interface VibeAffinity {
-  score: number;
-  lastUpdated: string;
-}
-
-/**
- * Tracks a user interaction with a gem and updates their vibe affinity profile.
- * Applies a mathematical decay to existing scores based on time elapsed since the last update.
- * 
- * Score Formula: NewScore = (OldScore / (1 + DaysSinceLastUpdate)) + InteractionPoints
- * 
- * @async
- * @function trackInteraction
- * @param {string} userId - The Firebase UID of the traveler.
- * @param {string} vibe - The primary vibe of the gem being interacted with (e.g., 'Adventurous').
- * @param {'view' | 'save' | 'book'} type - The type of interaction (view=1pt, save=3pt, book=10pt).
- * @returns {Promise<void>}
- */
-export async function trackInteraction(userId: string, vibe: string, type: 'view' | 'save' | 'book') {
+export async function trackInteraction(userId: string, vibe: string, type: 'view' | 'like' | 'save') {
   if (!userId || !vibe) return;
 
-  const points = {
-    view: 1,
-    save: 3,
-    book: 10
-  };
+  try {
+    const userRef = doc(db, 'users', userId);
+    const userSnap = await getDoc(userRef);
+    
+    if (!userSnap.exists()) return;
 
-  const userRef = doc(db, 'users', userId);
-  const userSnap = await getDoc(userRef);
-  
-  if (!userSnap.exists()) return;
-
-  const data = userSnap.data();
-  const affinities: Record<string, VibeAffinity> = data.vibeAffinities || {};
-  
-  const current = affinities[vibe] || { score: 0, lastUpdated: new Date().toISOString() };
-  
-  // Calculate recency decay for existing score
-  const lastUpdate = new Date(current.lastUpdated);
-  const daysSince = Math.max(0, (new Date().getTime() - lastUpdate.getTime()) / (1000 * 60 * 60 * 24));
-  const decayedScore = current.score / (1 + daysSince);
-
-  // Update with new points
-  const newScore = decayedScore + points[type];
-
-  await updateDoc(userRef, {
-    [`vibeAffinities.${vibe}`]: {
-      score: newScore,
-      lastUpdated: new Date().toISOString()
-    }
-  });
+    // Use a nested update for affinities
+    // Weighting: view=1, like=5, save=10
+    const weight = type === 'view' ? 1 : type === 'like' ? 5 : 10;
+    
+    await updateDoc(userRef, {
+      [`vibeAffinities.${vibe}.score`]: increment(weight),
+      [`vibeAffinities.${vibe}.lastInteraction`]: new Date(),
+      [`vibeAffinities.${vibe}.count`]: increment(1)
+    });
+  } catch (err) {
+    console.error("Error tracking interaction:", err);
+  }
 }
 
 /**
- * Processes a user's affinity map and returns vibes ordered by descending relevance.
- * 
- * @function getPersonalizedVibes
- * @param {Record<string, VibeAffinity>} [vibeAffinities={}] - The affinity map from the user's document.
- * @returns {string[]} An array of vibe names sorted by current relevance score.
+ * Ranks community posts based on a simple affinity score.
  */
-export function getPersonalizedVibes(vibeAffinities: Record<string, VibeAffinity> = {}): string[] {
-  return Object.entries(vibeAffinities)
-    .sort(([, a], [, b]) => b.score - a.score)
-    .map(([vibe]) => vibe);
+export async function getPersonalizedFeed(userId: string, userVibes: string[] = [], vibeAffinities: Record<string, any> = {}) {
+  try {
+    const postsCol = collection(db, 'community_posts');
+    const q = query(postsCol, orderBy('createdAt', 'desc'), limit(50));
+    const snap = await getDocs(q);
+    const posts = snap.docs.map(doc => ({ id: doc.id, ...doc.data() } as CommunityPost));
+
+    // Simple Scoring Algorithm
+    const rankedPosts = posts.map(post => {
+      let score = 0;
+
+      // 1. Vibe Matching (High weight)
+      if (post.vibeTags) {
+        post.vibeTags.forEach(tag => {
+          // Check explicit vibes
+          if (userVibes.includes(tag)) score += 10;
+          
+          // Check historical affinities
+          if (vibeAffinities && vibeAffinities[tag]) {
+            score += (vibeAffinities[tag].score || 0) * 2;
+          }
+        });
+      }
+
+      // 2. Popularity (Medium weight)
+      score += (post.likes || 0) * 2;
+      score += (post.commentCount || 0) * 3;
+      score += (post.viewCount || 0) * 0.1;
+
+      // 3. Recency (Decay)
+      if (post.createdAt?.toDate) {
+        const ageInHours = (Date.now() - post.createdAt.toDate().getTime()) / (1000 * 60 * 60);
+        score -= ageInHours * 0.5;
+      }
+
+      return { 
+        ...post, 
+        createdAt: post.createdAt?.toDate?.()?.toISOString() || new Date().toISOString(),
+        personalizationScore: score 
+      };
+    });
+
+    // Sort by score
+    return JSON.parse(JSON.stringify(rankedPosts.sort((a: any, b: any) => b.personalizationScore - a.personalizationScore)));
+  } catch (err) {
+    console.error("Error generating personalized feed:", err);
+    return [];
+  }
+}
+
+/**
+ * Suggests "Top Storytellers" based on engagement.
+ */
+export async function getTopStorytellers() {
+    try {
+      const postsCol = collection(db, 'community_posts');
+      const q = query(postsCol, orderBy('likes', 'desc'), limit(20));
+      const snap = await getDocs(q);
+      
+      const authorMap = new Map();
+      snap.docs.forEach(doc => {
+        const data = doc.data();
+        const authorId = data.authorId;
+        if (!authorId) return;
+
+        if (!authorMap.has(authorId)) {
+          authorMap.set(authorId, {
+            id: authorId,
+            name: data.authorName || 'Traveler',
+            photo: data.authorPhoto || '',
+            likes: 0,
+            postCount: 0
+          });
+        }
+        const stats = authorMap.get(authorId);
+        stats.likes += (data.likes || 0);
+        stats.postCount += 1;
+      });
+
+      const storytellers = Array.from(authorMap.values())
+        .sort((a: any, b: any) => b.likes - a.likes)
+        .slice(0, 5);
+        
+      return JSON.parse(JSON.stringify(storytellers));
+    } catch (err) {
+      console.error("Error fetching top storytellers:", err);
+      return [];
+    }
 }

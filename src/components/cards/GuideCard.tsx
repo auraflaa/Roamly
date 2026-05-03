@@ -6,6 +6,8 @@ import { Star, CheckCircle, Globe, MapPin, Users } from 'lucide-react';
 import type { Guide } from '@/lib/types';
 import { getInitials } from '@/lib/utils';
 
+import OptimizedImage from '@/components/ui/OptimizedImage';
+
 interface GuideCardProps {
   guide: Guide & { displayName?: string; photoURL?: string };
 }
@@ -22,13 +24,18 @@ export default function GuideCard({ guide }: GuideCardProps) {
         {/* Avatar */}
         <div className="relative flex-shrink-0">
           <div
-            className="w-12 h-12 rounded-full flex items-center justify-center text-white font-bold text-sm bg-brand-ember"
+            className="w-12 h-12 rounded-full flex items-center justify-center text-white font-bold text-sm bg-brand-ember overflow-hidden"
             style={guide.verificationStatus === 'approved' ? {
               boxShadow: '0 0 0 2.5px var(--card), 0 0 0 4.5px var(--color-brand-ember)',
             } : {}}
           >
             {guide.photoURL ? (
-              <img src={guide.photoURL} alt={name} className="w-full h-full rounded-full object-cover" />
+              <OptimizedImage 
+                src={guide.photoURL} 
+                alt={name} 
+                aspectRatio="square"
+                className="w-full h-full rounded-full object-cover" 
+              />
             ) : (
               getInitials(name)
             )}

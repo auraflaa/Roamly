@@ -9,9 +9,12 @@ export interface PostData {
   authorPhoto?: string;
   photos: string[];
   title: string;
+  subtitle?: string;
   description: string;
+  content: string;
   vibeTags: string[];
   gemId?: string;
+  readingTime?: string;
 }
 
 /**
@@ -22,12 +25,13 @@ export async function createPost(data: PostData) {
     const postsCol = collection(db, 'community_posts');
     const docRef = await addDoc(postsCol, {
       ...data,
-      moderationStatus: 'approved', // Auto-approve for MVP as per spec Section 10
+      moderationStatus: 'approved',
       flagCount: 0,
       flaggedBy: [],
       likes: 0,
       likedBy: [],
       commentCount: 0,
+      viewCount: 0,
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp()
     });

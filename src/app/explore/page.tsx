@@ -12,39 +12,13 @@ import { useExploreStore } from '@/lib/store';
 import { useAuth } from '@/lib/auth-context';
 import { Sparkles } from 'lucide-react';
 
+import { useGems } from '@/lib/hooks/use-gems';
+
 export default function ExplorePage() {
-  const [gems, setGems] = useState<Gem[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { gems, isLoading: loading } = useGems({ limit: 40 });
   const [showFilters, setShowFilters] = useState(false);
   const { filters, setVibeFilter, setModeFilter, setSearchQuery, resetFilters } = useExploreStore();
   const { userData } = useAuth();
-
-  useEffect(() => {
-    loadGems();
-  }, []);
-
-  const loadGems = async () => {
-    setLoading(true);
-    try {
-      const q = query(
-        collection(db, 'gems'),
-        where('moderationStatus', '==', 'approved'),
-        limit(20)
-      );
-      const snap = await getDocs(q);
-      if (snap.empty) {
-        // Fallback to seed data for demo
-        setGems(SEED_GEMS as unknown as Gem[]);
-      } else {
-        setGems(snap.docs.map(d => ({ ...d.data(), id: d.id } as Gem)));
-      }
-    } catch (err) {
-      console.error('Error loading gems:', err);
-      setGems(SEED_GEMS as unknown as Gem[]);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   // Filter gems client-side
   const filteredGems = gems.filter(gem => {

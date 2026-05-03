@@ -81,6 +81,12 @@
   --mode-online-text: #FFFFFF;
   --mode-inperson-bg: #FDDCC8;
   --mode-inperson-text: #8B5E3C;
+
+  --glass-bg: rgba(255, 255, 255, 0.7);
+  --glass-border: rgba(0, 0, 0, 0.04);
+  --overlay-bg: rgba(0, 0, 0, 0.4);
+  --hero-fade: #FAF9F6;
+  --cta-bg: linear-gradient(to bottom right, #E8601A, #C94F10);
 }
 
 [data-theme='dark'] {
@@ -102,6 +108,12 @@
   --mode-online-text: #D4EDDE;
   --mode-inperson-bg: #3D2B1F;
   --mode-inperson-text: #FDDCC8;
+
+  --glass-bg: rgba(10, 10, 10, 0.4);
+  --glass-border: rgba(255, 255, 255, 0.05);
+  --overlay-bg: rgba(0, 0, 0, 0.75);
+  --hero-fade: #0A0A0A;
+  --cta-bg: linear-gradient(to bottom right, #171717, #0A0A0A);
 }
 
 
@@ -224,15 +236,10 @@ body.main-page::-webkit-scrollbar {
 
 /* Glass effect */
 .glass {
-  background: rgba(10, 10, 10, 0.4);
+  background: var(--glass-bg);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-}
-
-[data-theme='light'] .glass {
-  background: rgba(255, 255, 255, 0.7);
-  border-color: rgba(0, 0, 0, 0.04);
+  border-bottom: 1px solid var(--glass-border);
 }
 
 /* Typography */

@@ -1,25 +1,42 @@
+'use client';
+
 import React from 'react';
 import Link from 'next/link';
 import { MapPin, Camera, Mail, Send } from 'lucide-react';
 import Image from 'next/image';
+import { motion, AnimatePresence } from 'framer-motion';
+import { useThemeStore } from '@/lib/store';
 
 export default function Footer() {
+  const { theme } = useThemeStore();
+
   return (
     <footer className="bg-surface text-primary-text border-t border-border">
       <div className="max-w-[1280px] mx-auto px-4 lg:px-6 py-16 lg:py-24">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-12">
           {/* Brand & Story */}
           <div className="md:col-span-1">
-            <Link href="/" className="flex items-center gap-2.5 mb-6 group">
-              <div className="relative w-9 h-9 rounded-xl overflow-hidden group-hover:scale-105 transition-transform duration-300">
-                <Image 
-                  src="/logos/non-transparent/07_icon_orange_bg.png" 
-                  alt="Roamly Icon" 
-                  fill
-                  className="object-contain"
-                />
+            <Link href="/" className="flex items-center mb-6 group">
+              <div className="relative w-32 h-10 transition-transform duration-300 group-hover:scale-105">
+                <AnimatePresence mode="wait">
+                  <motion.div
+                    key={theme}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.3 }}
+                    className="absolute inset-0"
+                  >
+                    <Image 
+                      src={theme === 'dark' ? "/assets/logos/02_horizontal_lockup_dark.png" : "/assets/logos/01_horizontal_lockup_light.png"}
+                      alt="Roamly Logo" 
+                      fill
+                      sizes="128px"
+                      className="object-contain"
+                    />
+                  </motion.div>
+                </AnimatePresence>
               </div>
-              <span className="text-xl font-bold tracking-tight">Roamly</span>
             </Link>
             <p className="text-sm leading-relaxed text-secondary-text mb-8 font-light">
               We believe travel is about human connection. Discover the world's most authentic hidden gems through the eyes of local storytellers.

@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/lib/auth-context';
 import { useRouter } from 'next/navigation';
 import { Calendar, User, Settings, Star, MapPin, Heart, Shield, LogOut, Check, X, Camera, Loader2 } from 'lucide-react';
+import OptimizedImage from '@/components/ui/OptimizedImage';
 import { doc, updateDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { getUploadUrl } from '@/app/actions/storage';
@@ -110,7 +111,12 @@ export default function ProfilePage() {
         <div className="relative group">
           <div className="w-24 h-24 rounded-full bg-brand-ember flex items-center justify-center text-white text-3xl font-bold flex-shrink-0 shadow-xl shadow-brand-ember/20 overflow-hidden">
             {userData.photoURL ? (
-              <img src={userData.photoURL} alt={userData.displayName} className="w-full h-full object-cover" />
+              <OptimizedImage 
+                src={userData.photoURL} 
+                alt={userData.displayName} 
+                aspectRatio="square"
+                className="w-full h-full object-cover" 
+              />
             ) : (
               userData.displayName?.[0]?.toUpperCase() || 'U'
             )}

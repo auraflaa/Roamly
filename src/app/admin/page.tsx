@@ -19,6 +19,12 @@ export default function AdminDashboard() {
   const [statusMessage, setStatusMessage] = React.useState('');
   const [stats, setStats] = React.useState({ users: 0, pendingGuides: 0, flagged: 0 });
   const [loadingStats, setLoadingStats] = React.useState(true);
+  const isMounted = React.useRef(true);
+
+  React.useEffect(() => {
+    isMounted.current = true;
+    return () => { isMounted.current = false; };
+  }, []);
 
   React.useEffect(() => {
     async function fetchStats() {
@@ -29,15 +35,19 @@ export default function AdminDashboard() {
           getCountFromServer(query(collection(db, 'community_posts'), where('flagCount', '>', 0)))
         ]);
 
-        setStats({
-          users: usersCount.data().count,
-          pendingGuides: guidesCount.data().count,
-          flagged: postsCount.data().count
-        });
+        if (isMounted.current) {
+          setStats({
+            users: usersCount.data().count,
+            pendingGuides: guidesCount.data().count,
+            flagged: postsCount.data().count
+          });
+        }
       } catch (error) {
         console.error("Error fetching stats:", error);
       } finally {
-        setLoadingStats(false);
+        if (isMounted.current) {
+          setLoadingStats(false);
+        }
       }
     }
     fetchStats();
@@ -47,9 +57,13 @@ export default function AdminDashboard() {
     setSeeding(true);
     setStatusMessage('Seeding database...');
     const success = await seedDatabase();
-    setSeeding(false);
-    setStatusMessage(success ? 'Database seeded successfully!' : 'Error seeding database.');
-    setTimeout(() => setStatusMessage(''), 3000);
+    if (isMounted.current) {
+      setSeeding(false);
+      setStatusMessage(success ? 'Database seeded successfully!' : 'Error seeding database.');
+      setTimeout(() => {
+        if (isMounted.current) setStatusMessage('');
+      }, 3000);
+    }
   };
 
   const handleSyncPhotos = async () => {
@@ -57,13 +71,18 @@ export default function AdminDashboard() {
     setSyncing(true);
     setStatusMessage('Syncing images to Hugging Face bucket...');
     const result = await syncPhotosToBucket();
-    setSyncing(false);
-    if (result.success) {
-      setStatusMessage(`Sync complete: ${result.photos} images processed across ${result.gems} gems.`);
-    } else {
-      setStatusMessage(`Sync failed: ${result.error}`);
+    if (isMounted.current) {
+      setSyncing(true);
+      setSyncing(false);
+      if (result.success) {
+        setStatusMessage(`Sync complete: ${result.photos} images processed across ${result.gems} gems.`);
+      } else {
+        setStatusMessage(`Sync failed: ${result.error}`);
+      }
+      setTimeout(() => {
+        if (isMounted.current) setStatusMessage('');
+      }, 8000);
     }
-    setTimeout(() => setStatusMessage(''), 8000);
   };
 
   if (!userData) {
@@ -194,7 +213,7 @@ export default function AdminDashboard() {
 
       {/* Confirmation Modal */}
       {showConfirm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-300">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[var(--overlay-bg)] backdrop-blur-md animate-in fade-in duration-300">
           <div className="max-w-md w-full bg-surface border border-border rounded-[40px] p-10 shadow-2xl relative overflow-hidden">
             <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-brand-ember to-brand-sienna" />
             
@@ -204,7 +223,7 @@ export default function AdminDashboard() {
             
             <h3 className="text-3xl font-bold mb-4 text-primary-text">Execute Sync?</h3>
             <p className="text-secondary-text mb-10 leading-relaxed">
-              This process will download all external photos from external URLs and migrate them to your **Hugging Face Bucket**. This will modify live documents in Firestore.
+              This process will download all external photos from external URLs and migrate them to your <span className="font-bold text-primary-text">Hugging Face Bucket</span>. This will modify live documents in Firestore.
             </p>
             
             <div className="flex flex-col sm:flex-row gap-4">

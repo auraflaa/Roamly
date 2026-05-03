@@ -32,21 +32,39 @@ interface GemCardProps {
  * @component
  * @param {GemCardProps} props - Component properties.
  */
+import OptimizedImage from '@/components/ui/OptimizedImage';
+import { useSWRConfig } from 'swr';
+import { doc, getDoc } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
+
 export default function GemCard({ gem, onSave, isSaved, personalized }: GemCardProps) {
+  const { mutate } = useSWRConfig();
+
+  const prefetchData = () => {
+    mutate(`gem/${gem.id}`, async () => {
+      const docRef = doc(db, 'gems', gem.id);
+      const snap = await getDoc(docRef);
+      return { ...snap.data(), id: snap.id } as Gem;
+    }, { revalidate: false });
+  };
+
   return (
-    <Link href={`/gem/${gem.id}`} className="group block">
+    <Link 
+      href={`/gem/${gem.id}`} 
+      className="group block"
+      onMouseEnter={prefetchData}
+    >
       <div
         className="rounded-[22px] overflow-hidden card-hover"
         style={{ background: 'var(--card)', border: '1px solid var(--border)' }}
       >
         {/* Image Section */}
-        <div className="relative h-[160px] lg:h-[220px] overflow-hidden">
-          <div
-            className="w-full h-full bg-cover bg-center transition-transform duration-500 group-hover:scale-105"
-            style={{
-              backgroundImage: gem.photos[0] ? `url(${gem.photos[0]})` : undefined,
-              backgroundColor: 'var(--surface)',
-            }}
+        <div className="relative overflow-hidden">
+          <OptimizedImage 
+            src={gem.photos[0]} 
+            alt={gem.title}
+            aspectRatio="16/10"
+            className="group-hover:scale-105 transition-transform duration-700"
           />
           {/* Gradient overlay for text legibility */}
           <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
@@ -73,7 +91,7 @@ export default function GemCard({ gem, onSave, isSaved, personalized }: GemCardP
 
           {/* Vibe Tags: Categorical preview */}
           <div className="absolute bottom-3 left-3 flex gap-1.5">
-            {gem.vibes.slice(0, 2).map((vibe) => (
+            {Array.from(new Set(gem.vibes)).slice(0, 2).map((vibe) => (
               <span
                 key={vibe}
                 className="px-2.5 py-1 rounded-full text-[10px] font-medium backdrop-blur-md"
