@@ -42,30 +42,38 @@ const sectionReveal = {
   }
 };
 
-const features = [
-  { icon: Compass, title: 'Hidden Gems', description: 'Discover authentic places curated by verified local insiders — far from the tourist traps.' },
-  { icon: Users, title: 'Local Guides', description: 'Connect with passionate locals who share their city through guided, virtual, or self-paced tours.' },
-  { icon: Shield, title: 'Safety First', description: 'Verified guides, identity checks, real-time location sharing, and SOS features for peace of mind.' },
-  { icon: Sparkles, title: 'Smart Matching', description: 'AI-powered recommendations pair you with guides and gems that match your travel vibes.' },
+import { useSettings } from '@/lib/hooks/use-settings';
+
+// Icon mapping for dynamic features
+const IconMap: Record<string, any> = {
+  Compass,
+  Users,
+  Shield,
+  Sparkles,
+};
+
+// Default fallbacks to ensure zero-downtime aesthetics
+const DEFAULT_FEATURES = [
+  { icon: 'Compass', title: 'Hidden Gems', description: 'Discover authentic places curated by verified local insiders — far from the tourist traps.' },
+  { icon: 'Users', title: 'Local Guides', description: 'Connect with passionate locals who share their city through guided, virtual, or self-paced tours.' },
+  { icon: 'Shield', title: 'Safety First', description: 'Verified guides, identity checks, real-time location sharing, and SOS features for peace of mind.' },
+  { icon: 'Sparkles', title: 'Smart Matching', description: 'AI-powered recommendations pair you with guides and gems that match your travel vibes.' },
 ];
 
-const stats = [
-  { value: '500+', label: 'Hidden Gems' },
-  { value: '120+', label: 'Local Guides' },
-  { value: '15K+', label: 'Happy Travelers' },
-  { value: '4.8', label: 'Avg Rating' },
-];
-
-const BACKGROUND_IMAGES = [
-  'https://images.unsplash.com/photo-1499856871958-5b9627545d1a?auto=format&fit=crop&w=2000&q=80', // Paris
-  'https://images.unsplash.com/photo-1534008897995-27a23e859048?auto=format&fit=crop&w=2000&q=80', // Kyoto
-  'https://images.unsplash.com/photo-1506929562872-bb421503ef21?auto=format&fit=crop&w=2000&q=80', // Tropical Beach
-  'https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?auto=format&fit=crop&w=2000&q=80', // Mountains
+const DEFAULT_BG = [
+  'https://images.unsplash.com/photo-1499856871958-5b9627545d1a?auto=format&fit=crop&w=1600&q=75',
+  'https://images.unsplash.com/photo-1534008897995-27a23e859048?auto=format&fit=crop&w=1600&q=75',
 ];
 
 export default function LandingPage() {
   const router = useRouter();
+  const { settings, isLoading: settingsLoading } = useSettings('homepage');
   const [currentBg, setCurrentBg] = useState(0);
+  
+  // Dynamic Backgrounds and Features
+  const heroImages = settings?.heroImages || DEFAULT_BG;
+  const homeFeatures = settings?.features || DEFAULT_FEATURES;
+
   const [showRecommendation, setShowRecommendation] = useState(false);
   const [isRecommendationDismissed, setIsRecommendationDismissed] = useState(false);
   const [hasMounted, setHasMounted] = useState(false);
@@ -106,7 +114,7 @@ export default function LandingPage() {
     fetchStats();
 
     const timer = setInterval(() => {
-      setCurrentBg((prev) => (prev + 1) % BACKGROUND_IMAGES.length);
+      setCurrentBg((prev) => (prev + 1) % heroImages.length);
     }, 6000);
 
     // Show recommendation after 3 seconds
@@ -156,27 +164,28 @@ export default function LandingPage() {
       
       {/* 1. HERO SECTION - Immersive, Cinematic, Parallax */}
       <section className="relative min-h-[95vh] flex items-center justify-center overflow-hidden">
-        {/* Animated Slideshow Background */}
-        <AnimatePresence mode="popLayout">
-          <motion.div
-            key={currentBg}
-            initial={{ opacity: 0, scale: 1.1 }}
-            animate={{ opacity: 1, scale: 1.15 }} // Continuous slow zoom
-            exit={{ opacity: 0 }}
-            transition={{ duration: 6, ease: 'linear' }}
-            className="absolute inset-0 z-0"
-          >
-            <OptimizedImage 
-              src={BACKGROUND_IMAGES[currentBg]} 
-              alt="Travel background" 
-              aspectRatio="unset"
-              className="absolute inset-0 w-full h-full object-cover"
-            />
-          </motion.div>
-        </AnimatePresence>
-
-        {/* Premium Dark Gradient Overlay for Contrast */}
-        <div className="absolute inset-0 z-0 bg-gradient-to-b from-black/60 via-black/40 to-[var(--hero-fade)]" />
+        <div className="absolute inset-0 z-0 bg-dark-bg">
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={currentBg}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 1.5 }}
+              className="absolute inset-0"
+            >
+              <OptimizedImage 
+                src={heroImages[currentBg]} 
+                alt="Travel background" 
+                aspectRatio="unset"
+                priority={true}
+                className="absolute inset-0 w-full h-full object-cover opacity-60"
+              />
+            </motion.div>
+          </AnimatePresence>
+          {/* Premium Dark Gradient Overlay for Contrast */}
+          <div className="absolute inset-0 z-10 bg-gradient-to-b from-black/40 via-transparent to-[var(--hero-fade)]" />
+        </div>
         
         {/* Content Container with Parallax */}
         <motion.div 
@@ -452,28 +461,31 @@ export default function LandingPage() {
           </motion.div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {features.map(({ icon: Icon, title, description }, index) => (
-              <motion.div
-                key={title}
-                initial={{ opacity: 0, y: 40 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, margin: "-50px" }}
-                transition={{ duration: 0.6, delay: index * 0.1, ease: [0.16, 1, 0.3, 1] }}
-                whileHover={{ y: -8, scale: 1.02 }}
-                className="p-8 rounded-[28px] group cursor-pointer transition-all duration-300"
-                style={{ 
-                  background: 'var(--surface)', 
-                  border: '1px solid var(--border)',
-                  boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)'
-                }}
-              >
-                <div className="w-14 h-14 rounded-2xl flex items-center justify-center mb-6 bg-brand-ember/10 group-hover:bg-brand-ember transition-colors duration-300">
-                  <Icon size={24} className="text-brand-ember group-hover:text-white transition-colors duration-300" />
-                </div>
-                <h3 className="text-xl font-semibold mb-3" style={{ color: 'var(--primary-text)' }}>{title}</h3>
-                <p className="font-light leading-relaxed" style={{ color: 'var(--secondary-text)' }}>{description}</p>
-              </motion.div>
-            ))}
+            {homeFeatures.map(({ icon: iconName, title, description }, index) => {
+              const Icon = IconMap[iconName] || Sparkles;
+              return (
+                <motion.div
+                  key={title}
+                  initial={{ opacity: 0, y: 40 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, margin: "-50px" }}
+                  transition={{ duration: 0.6, delay: index * 0.1, ease: [0.16, 1, 0.3, 1] }}
+                  whileHover={{ y: -8, scale: 1.02 }}
+                  className="p-8 rounded-[28px] group cursor-pointer transition-all duration-300"
+                  style={{ 
+                    background: 'var(--surface)', 
+                    border: '1px solid var(--border)',
+                    boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)'
+                  }}
+                >
+                  <div className="w-14 h-14 rounded-2xl flex items-center justify-center mb-6 bg-brand-ember/10 group-hover:bg-brand-ember transition-colors duration-300">
+                    <Icon size={24} className="text-brand-ember group-hover:text-white transition-colors duration-300" />
+                  </div>
+                  <h3 className="text-xl font-semibold mb-3" style={{ color: 'var(--primary-text)' }}>{title}</h3>
+                  <p className="font-light leading-relaxed" style={{ color: 'var(--secondary-text)' }}>{description}</p>
+                </motion.div>
+              );
+            })}
           </div>
         </div>
       </section>

@@ -16,6 +16,11 @@ export interface User {
   locationEnabled?: boolean;
   fcmToken?: string;
   vibeAffinities?: Record<string, { score: number; lastUpdated: string }>;
+  identityVerified?: boolean;
+  reviewsCount?: number;
+  itineraryCount?: number;
+  preferredLanguage?: string;
+  bio?: string;
 }
 
 export interface Guide {

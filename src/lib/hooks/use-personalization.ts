@@ -1,7 +1,7 @@
 'use client';
 
 import useSWR from 'swr';
-import { getPersonalizedFeed, getTopStorytellers } from '@/app/actions/personalization';
+import { getPersonalizedFeed } from '@/app/actions/personalization';
 import type { CommunityPost } from '@/lib/types';
 
 /**
@@ -30,22 +30,3 @@ export function usePersonalizedFeed(userId: string | undefined, userVibes: strin
   };
 }
 
-/**
- * Hook to fetch top storytellers.
- */
-export function useTopStorytellers() {
-  const { data, error, isLoading } = useSWR(
-    'top-storytellers',
-    async () => await getTopStorytellers(),
-    {
-      revalidateOnFocus: false,
-      dedupingInterval: 600000, // 10 minutes
-    }
-  );
-
-  return {
-    storytellers: data || [],
-    isLoading,
-    error
-  };
-}

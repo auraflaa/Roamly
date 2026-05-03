@@ -44,14 +44,18 @@ export default function OptimizedImage({ src, alt, className = '', aspectRatio =
         </div>
       ) : (
         <img
-          src={src || 'https://images.unsplash.com/photo-1524492412937-b28074a5d7da?auto=format&fit=crop&q=80&w=1000'}
+          src={src || 'https://images.unsplash.com/photo-1512343879784-a960bf40e7f2?auto=format&fit=crop&q=80&w=1000'}
           alt={alt}
           loading={priority ? 'eager' : 'lazy'}
           className={`w-full h-full object-cover transition-all duration-700 ease-out ${
             isLoaded ? 'opacity-100 scale-100 blur-0' : 'opacity-0 scale-105 blur-lg'
           }`}
           onLoad={() => setIsLoaded(true)}
-          onError={() => setHasError(true)}
+          onError={(e) => {
+            console.warn(`Image load failed: ${src}. Using fallback.`);
+            setHasError(false); // Don't show error state, just use fallback src
+            (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1512343879784-a960bf40e7f2?auto=format&fit=crop&q=80&w=1000';
+          }}
         />
       )}
     </div>

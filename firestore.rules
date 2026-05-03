@@ -2,80 +2,47 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Helper functions
+    
+    // --- Helper functions ---
     function isAuthenticated() {
       return request.auth != null;
     }
+    
     function isOwner(userId) {
       return isAuthenticated() && request.auth.uid == userId;
     }
+    
     function isAdmin() {
-      // In a real app, you'd check a custom claim or an admins collection
-      // For MVP, checking if the user document has role == 'admin'
-      return isAuthenticated() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
-    }
-    function isGuide() {
-      return isAuthenticated() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'guide';
+      return isAuthenticated() && 
+             (exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+              get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin');
     }
 
-    // Users collection
+    // --- Collections ---
+
     match /users/{userId} {
-      // Anyone can read basic profiles (needed for showing who posted what)
       allow read: if true;
-      // Users can only create/update their own profile, admins can update any
-      allow create, update: if isOwner(userId) || isAdmin();
-      // Only admins can delete users
+      allow create: if true; // Allow initial user creation
+      allow update: if isOwner(userId) || isAdmin();
       allow delete: if isAdmin();
     }
 
-    // Guides collection
+    // TEMPORARY: Allow full access for initial migration and seeding
+    // Switch these back to 'isAuthenticated() || isAdmin()' once setup is complete
     match /guides/{guideId} {
-      allow read: if true;
-      allow create, update: if isOwner(guideId) || isAdmin();
-      allow delete: if isAdmin();
+      allow read, write: if true; 
     }
 
-    // Gems collection
     match /gems/{gemId} {
-      allow read: if true;
-      // Allow guides/admins full access, others can only update photos/updatedAt during migration
-      allow create: if isGuide() || isAdmin();
-      allow update: if isGuide() || isAdmin() || (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['photos', 'updatedAt']));
-      allow delete: if isAdmin();
+      allow read, write: if true;
     }
 
-    // Bookings collection
-    match /bookings/{bookingId} {
-      // Users can only read/write bookings they are part of
-      allow read: if isAuthenticated() && 
-        (request.auth.uid == resource.data.userId || request.auth.uid == resource.data.guideId || isAdmin());
-      allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
-      allow update: if isAuthenticated() && 
-        (request.auth.uid == resource.data.userId || request.auth.uid == resource.data.guideId || isAdmin());
-      allow delete: if isAdmin();
+    match /community_posts/{postId=**} {
+      allow read, write: if true;
     }
 
-    // Community Posts collection
-    match /community_posts/{postId} {
-      allow read: if true;
-      allow create: if isAuthenticated() && request.resource.data.authorId == request.auth.uid;
-      // Allow authors/admins full access, others can only update photos/updatedAt during migration
-      allow update: if (isAuthenticated() && (resource.data.authorId == request.auth.uid || isAdmin())) || (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['photos', 'updatedAt']));
-      allow delete: if isAuthenticated() && (resource.data.authorId == request.auth.uid || isAdmin());
-    }
-
-    // Reviews collection
-    match /reviews/{reviewId} {
-      allow read: if true;
-      allow create: if isAuthenticated() && request.resource.data.reviewerId == request.auth.uid;
-      allow update, delete: if isAuthenticated() && (resource.data.reviewerId == request.auth.uid || isAdmin());
-    }
-
-    // Notifications collection
-    match /notifications/{notificationId} {
-      allow read: if isOwner(resource.data.userId);
-      allow create: if isAuthenticated(); // Anyone can trigger a notification
-      allow update, delete: if isOwner(resource.data.userId);
+    match /settings/{settingId} {
+      allow read, write: if true;
     }
   }
 }

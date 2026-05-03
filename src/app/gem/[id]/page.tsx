@@ -4,15 +4,16 @@ import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { doc, getDoc, collection, getDocs, query, where, limit } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import { Star, MapPin, Clock, ArrowLeft, Heart, Share2, CheckCircle, Backpack, Calendar, ChevronLeft, ChevronRight, Loader2, PartyPopper, Users, Sparkles } from 'lucide-react';
+import { Star, MapPin, Clock, ArrowLeft, Heart, Share2, CheckCircle, Backpack, Calendar, ChevronLeft, ChevronRight, Loader2, PartyPopper, Users, Sparkles, ArrowRight, X } from 'lucide-react';
 import Link from 'next/link';
 import type { Gem, Guide } from '@/lib/types';
 import { SEED_GEMS, SEED_GUIDES } from '@/lib/seed';
 import { useAuth } from '@/lib/auth-context';
 import { createBooking } from '@/app/actions/booking';
-import { trackInteraction } from '@/app/actions/personalization';
+import { useUserActions } from '@/lib/hooks/use-user';
 
 import { useGem, useGuides } from '@/lib/hooks/use-gems';
+import OptimizedImage from '@/components/ui/OptimizedImage';
 
 export default function GemDetailPage() {
   const params = useParams();
@@ -25,14 +26,38 @@ export default function GemDetailPage() {
   
   const [currentPhoto, setCurrentPhoto] = useState(0);
   const [isSaved, setIsSaved] = useState(false);
+  
+  useEffect(() => {
+    if (userData?.savedGems && gem?.id) {
+      setIsSaved(userData.savedGems.includes(gem.id));
+    }
+  }, [userData, gem?.id]);
+
   const [bookingStatus, setBookingStatus] = useState<'idle' | 'booking' | 'success' | 'error' | 'not-supported'>('idle');
   const [selectedGuide, setSelectedGuide] = useState<string | null>(null);
+  const { toggleSavedGem, trackInteraction } = useUserActions();
 
   const loading = gemLoading || (gem && guidesLoading);
 
+  const handleToggleSave = async () => {
+    if (!firebaseUser) {
+      router.push('/login');
+      return;
+    }
+    const newSaved = !isSaved;
+    setIsSaved(newSaved); // Optimistic UI
+    
+    try {
+      await toggleSavedGem(id, newSaved, gem?.vibes?.[0]);
+    } catch (err) {
+      setIsSaved(!newSaved); // Rollback
+      console.error("Error in handleToggleSave:", err);
+    }
+  };
+
   useEffect(() => {
     if (firebaseUser && gem?.vibes?.[0]) {
-      trackInteraction(firebaseUser.uid, gem.vibes[0], 'view');
+      trackInteraction(gem.vibes[0], 'view');
     }
   }, [firebaseUser, gem?.id]);
 
@@ -94,7 +119,7 @@ export default function GemDetailPage() {
           </button>
           <div className="flex gap-3">
             <button
-              onClick={() => setIsSaved(!isSaved)}
+              onClick={handleToggleSave}
               className="p-3 rounded-2xl glass transition-all hover:scale-110 active:scale-95"
             >
               <Heart size={20} className={isSaved ? 'fill-brand-ember text-brand-ember' : 'text-white'} />

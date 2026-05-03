@@ -1,7 +1,7 @@
 'use server';
 
-import { db } from '@/lib/firebase';
-import { collection, addDoc, serverTimestamp, doc, updateDoc, increment, arrayUnion, arrayRemove } from 'firebase/firestore';
+import { db } from '@/lib/firebase-server';
+import { collection, addDoc, serverTimestamp, doc, updateDoc, increment, arrayUnion, arrayRemove } from 'firebase/firestore/lite';
 
 const COMMUNITY_IMAGE_LIMIT_BYTES = 620 * 1024;
 
@@ -71,14 +71,16 @@ export async function createPost(data: PostData) {
  * Toggles a like on a post
  */
 export async function toggleLike(postId: string, userId: string, isLiking: boolean) {
+  const sanitizedId = postId?.replace(/%20| /g, '-');
   try {
-    const postRef = doc(db, 'community_posts', postId);
+    const postRef = doc(db, 'community_posts', sanitizedId);
     await updateDoc(postRef, {
       likes: increment(isLiking ? 1 : -1),
       likedBy: isLiking ? arrayUnion(userId) : arrayRemove(userId)
     });
     return { success: true };
   } catch (error: any) {
+    console.error('Toggle like failed:', error);
     return { success: false, error: error.message };
   }
 }
@@ -87,8 +89,9 @@ export async function toggleLike(postId: string, userId: string, isLiking: boole
  * Adds a comment to a post
  */
 export async function addComment(postId: string, userId: string, userName: string, text: string) {
+  const sanitizedId = postId?.replace(/%20| /g, '-');
   try {
-    const commentsCol = collection(db, 'community_posts', postId, 'comments');
+    const commentsCol = collection(db, 'community_posts', sanitizedId, 'comments');
     await addDoc(commentsCol, {
       userId,
       userName,
@@ -96,7 +99,7 @@ export async function addComment(postId: string, userId: string, userName: strin
       createdAt: serverTimestamp()
     });
 
-    const postRef = doc(db, 'community_posts', postId);
+    const postRef = doc(db, 'community_posts', sanitizedId);
     await updateDoc(postRef, {
       commentCount: increment(1)
     });

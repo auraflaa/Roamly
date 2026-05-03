@@ -5,17 +5,15 @@ import {
   collection, 
   getDocs, 
   updateDoc, 
-  doc 
+  doc,
+  increment,
 } from 'firebase/firestore/lite';
-import app from '@/lib/firebase';
+import { db } from '@/lib/firebase-server';
 import { Buffer } from 'node:buffer';
 import https from 'node:https';
 import fs from 'node:fs';
 import path from 'node:path';
 import sharp from 'sharp';
-
-// Use Lite SDK for server-side migration
-const db = getFirestore(app, "talk-with-zeno");
 
 const httpsAgent = new https.Agent({
   rejectUnauthorized: false
@@ -28,11 +26,24 @@ async function downloadImageWithRetry(url: string, retries = 3): Promise<Buffer>
   for (let i = 0; i < retries; i++) {
     try {
       return await new Promise((resolve, reject) => {
-        https.get(url, { agent: httpsAgent }, (res) => {
+        const options = {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+      },
+      agent: httpsAgent
+    };
+
+    https.get(url, options, (res) => {
           if (res.statusCode === 301 || res.statusCode === 302) {
             return downloadImageWithRetry(res.headers.location!, retries - i).then(resolve).catch(reject);
           }
           if (res.statusCode !== 200) {
+            console.warn(`[SYNC] Image download failed with ${res.statusCode} for ${url}. Using fallback.`);
+            // Return a reliable fallback travel image Base64 if Unsplash fails
+            const fallbackUrl = 'https://images.unsplash.com/photo-1488646953014-85cb44e25828?auto=format&fit=crop&w=800&q=60';
+            if (url !== fallbackUrl) {
+              return downloadImageWithRetry(fallbackUrl, 1).then(resolve).catch(reject);
+            }
             reject(new Error(`Failed: ${res.statusCode}`));
             return;
           }
@@ -75,7 +86,7 @@ async function processImage(url: string, localFolder: string, id: string, index:
   return `data:image/webp;base64,${compressed.toString('base64')}`;
 }
 
-export async function syncPhotosToBucket() {
+export async function syncPhotosToFirestore() {
   console.log('[SYNC] Starting Firestore Base64 Migration...');
 
   try {
@@ -108,9 +119,9 @@ export async function syncPhotosToBucket() {
       await updateDoc(doc(db, 'gems', gemId), { photos: newPhotos });
     }
 
-    // 2. Process Posts
-    const postsSnapshot = await getDocs(collection(db, 'posts'));
-    console.log(`[SYNC] Found ${postsSnapshot.size} posts.`);
+    // 2. Process Community Posts
+    const postsSnapshot = await getDocs(collection(db, 'community_posts'));
+    console.log(`[SYNC] Found ${postsSnapshot.size} community posts.`);
 
     for (const postDoc of postsSnapshot.docs) {
       const postId = postDoc.id;
@@ -134,7 +145,7 @@ export async function syncPhotosToBucket() {
         }
       }
 
-      await updateDoc(doc(db, 'posts', postId), { photos: newPhotos });
+      await updateDoc(doc(db, 'community_posts', postId), { photos: newPhotos });
     }
 
     return { success: true, message: 'All photos compressed and stored in Firestore!' };

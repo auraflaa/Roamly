@@ -3,9 +3,10 @@
 import React from 'react';
 import { useAuth } from '@/lib/auth-context';
 import { useRouter } from 'next/navigation';
-import { Users, ShieldAlert, Flag, CheckCircle, Database, Loader2, AlertTriangle, X } from 'lucide-react';
-import { seedDatabase } from '@/lib/seed';
-import { syncPhotosToBucket } from '@/app/actions/migrate';
+import { Users, ShieldAlert, Flag, CheckCircle, Database, Loader2, AlertTriangle, X, Sparkles } from 'lucide-react';
+import { seedDatabase, seedHomepageSettings } from '@/lib/seed';
+import { syncPhotosToFirestore } from '@/app/actions/migrate';
+import { db } from '@/lib/firebase';
 import { collection, getCountFromServer, query, where } from 'firebase/firestore';
 
 export default function AdminDashboard() {
@@ -64,11 +65,24 @@ export default function AdminDashboard() {
     }
   };
 
+  const handleSeedSettings = async () => {
+    setSeeding(true);
+    setStatusMessage('Seeding Homepage UI Settings...');
+    const result = await seedHomepageSettings();
+    if (isMounted.current) {
+      setSeeding(false);
+      setStatusMessage(result.success ? result.message : `Error: ${result.error}`);
+      setTimeout(() => {
+        if (isMounted.current) setStatusMessage('');
+      }, 5000);
+    }
+  };
+
    const handleSyncPhotos = async () => {
     setShowConfirm(false);
     setSyncing(true);
     setStatusMessage('Compressing and migrating images to Firestore (Base64)...');
-    const result = await syncPhotosToBucket();
+    const result = await syncPhotosToFirestore();
     if (isMounted.current) {
       setSyncing(false);
       if (result.success) {
@@ -164,6 +178,20 @@ export default function AdminDashboard() {
                   <p className="text-xs text-brand-ember/60 mt-1">Compress and store all images in Firestore.</p>
                 </div>
               </button>
+
+              <button
+                onClick={handleSeedSettings}
+                disabled={syncing || seeding}
+                className="group p-6 rounded-2xl bg-blue-500/5 border border-blue-500/10 hover:bg-blue-500/10 transition-all text-left flex flex-col gap-3"
+              >
+                <div className="w-10 h-10 rounded-xl bg-blue-500 flex items-center justify-center text-white shadow-lg shadow-blue-500/20">
+                  {seeding ? <Loader2 size={20} className="animate-spin" /> : <Sparkles size={20} />}
+                </div>
+                <div>
+                  <h4 className="font-bold text-blue-500">Seed UI Settings</h4>
+                  <p className="text-xs text-blue-500/60 mt-1">Initialize dynamic hero & feature settings.</p>
+                </div>
+              </button>
             </div>
 
             {statusMessage && (
@@ -172,8 +200,6 @@ export default function AdminDashboard() {
                 <p className="text-sm font-medium text-primary-text">{statusMessage}</p>
               </div>
             )}
-          </div>
-
           </div>
         </div>
 
@@ -205,7 +231,6 @@ export default function AdminDashboard() {
             </p>
           </div>
         </div>
-      </div>
 
       {/* Confirmation Modal */}
       {showConfirm && (
@@ -239,6 +264,7 @@ export default function AdminDashboard() {
           </div>
         </div>
       )}
+      </div>
     </div>
   );
 }

@@ -1,5 +1,5 @@
-import { collection, doc, setDoc, getDocs, updateDoc, Timestamp } from 'firebase/firestore';
-import { db } from './firebase';
+import { collection, doc, setDoc, getDocs, updateDoc, Timestamp } from 'firebase/firestore/lite';
+import { db } from './firebase-server';
 
 // Helper to generate IDs
 const gid = (prefix: string, index: number) => `${prefix}-${index}`;
@@ -15,18 +15,16 @@ const REAL_GUIDE_NAMES = [
 ];
 
 const PHOTOS = [
-  'https://picsum.photos/id/10/1200/800',
-  'https://picsum.photos/id/11/1200/800',
-  'https://picsum.photos/id/12/1200/800',
-  'https://picsum.photos/id/13/1200/800',
-  'https://picsum.photos/id/14/1200/800',
-  'https://picsum.photos/id/15/1200/800',
-  'https://picsum.photos/id/16/1200/800',
-  'https://picsum.photos/id/17/1200/800',
-  'https://picsum.photos/id/18/1200/800',
-  'https://picsum.photos/id/19/1200/800',
-  'https://picsum.photos/id/20/1200/800',
-  'https://picsum.photos/id/21/1200/800',
+  'https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?auto=format&fit=crop&w=1200&q=80',
+  'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1200&q=80',
+  'https://images.unsplash.com/photo-1519046904884-53103b34b206?auto=format&fit=crop&w=1200&q=80',
+  'https://images.unsplash.com/photo-1502791451862-7bd8c1df43a7?auto=format&fit=crop&w=1200&q=80',
+  'https://images.unsplash.com/photo-1483728642387-6c3bdd6c93e5?auto=format&fit=crop&w=1200&q=80',
+  'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=1200&q=80',
+  'https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?auto=format&fit=crop&w=1200&q=80',
+  'https://images.unsplash.com/photo-1503220317375-aaad61436b1b?auto=format&fit=crop&w=1200&q=80',
+  'https://images.unsplash.com/photo-1512100356956-c1227c3464bb?auto=format&fit=crop&w=1200&q=80',
+  'https://images.unsplash.com/photo-1501785888041-af3ef285b470?auto=format&fit=crop&w=1200&q=80',
 ];
 
 const GEM_TITLES = [
@@ -121,6 +119,11 @@ const SEED_USERS = Array.from({ length: 20 }, (_, i) => ({
   savedGems: [],
   wishlist: [],
   vibes: [VIBES[i % VIBES.length]],
+  identityVerified: i % 3 === 0,
+  reviewsCount: Math.floor(Math.random() * 10),
+  itineraryCount: Math.floor(Math.random() * 5),
+  preferredLanguage: 'English',
+  bio: i < 10 ? `Native guide in ${CITIES[i % CITIES.length]}.` : 'Passionate explorer and storyteller.'
 }));
 
 // Generate 50 Community Posts (Medium-like)
@@ -167,7 +170,7 @@ export async function seedDatabase() {
           description: `An amazing place to visit. Experience the beauty of ${GEM_TITLES[i % GEM_TITLES.length]}.`,
           location: 'Vibrant City, India',
           photos: photos,
-          category: CATEGORIES[i % CATEGORIES.length],
+          category: VIBES[i % VIBES.length],
           rating: 4 + Math.random(),
           reviewCount: Math.floor(Math.random() * 200),
           guideId: `guide-${(i % 10) + 1}`,
@@ -226,10 +229,34 @@ export async function seedDatabase() {
         });
       }
     }
-
     return { success: true, message: 'Database force-seeded with working URLs' };
   } catch (error: any) {
     console.error('Seed failed:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+export async function seedHomepageSettings() {
+  console.log('Seeding Homepage Settings...');
+  try {
+    await setDoc(doc(db, 'settings', 'homepage'), {
+      heroImages: [
+        'https://images.unsplash.com/photo-1499856871958-5b9627545d1a?auto=format&fit=crop&w=2000&q=80',
+        'https://images.unsplash.com/photo-1534008897995-27a23e859048?auto=format&fit=crop&w=2000&q=80',
+        'https://images.unsplash.com/photo-1506929562872-bb421503ef21?auto=format&fit=crop&w=2000&q=80',
+        'https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?auto=format&fit=crop&w=2000&q=80',
+      ],
+      features: [
+        { icon: 'Compass', title: 'Hidden Gems', description: 'Discover authentic places curated by verified local insiders — far from the tourist traps.' },
+        { icon: 'Users', title: 'Local Guides', description: 'Connect with passionate locals who share their city through guided, virtual, or self-paced tours.' },
+        { icon: 'Shield', title: 'Safety First', description: 'Verified guides, identity checks, real-time location sharing, and SOS features for peace of mind.' },
+        { icon: 'Sparkles', title: 'Smart Matching', description: 'AI-powered recommendations pair you with guides and gems that match your travel vibes.' },
+      ],
+      updatedAt: new Date().toISOString()
+    });
+    return { success: true, message: 'Homepage settings seeded successfully!' };
+  } catch (error: any) {
+    console.error('Settings seed failed:', error);
     return { success: false, error: error.message };
   }
 }

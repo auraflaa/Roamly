@@ -1,10 +1,9 @@
 'use client';
 
 import useSWR from 'swr';
-import { collection, query, where, getDocs, limit, doc, getDoc } from 'firebase/firestore';
+import { collection, query, where, getDocs, limit, doc, getDoc, getDocFromServer } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import type { Gem, Guide } from '@/lib/types';
-import { SEED_GEMS, SEED_GUIDES } from '@/lib/seed';
 
 /**
  * Hook to fetch and cache a list of gems with SWR.
@@ -48,10 +47,29 @@ export function useGem(id: string) {
   const { data, error, isLoading, mutate } = useSWR(
     id ? `gem/${id}` : null,
     async () => {
-      const docRef = doc(db, 'gems', id);
-      const snap = await getDoc(docRef);
-      if (!snap.exists()) throw new Error('Gem not found');
-      return { ...snap.data(), id: snap.id } as Gem;
+      try {
+        const sanitizedId = id?.replace(/%20| /g, '-');
+        const docRef = doc(db, 'gems', sanitizedId);
+        
+        // Try cache first
+        let snap = await getDoc(docRef);
+        
+        // Fallback to server if not found in cache
+        if (!snap.exists()) {
+          console.log(`Gem ${id} not found in cache, forcing server fetch...`);
+          snap = await getDocFromServer(docRef);
+          
+          if (!snap.exists()) {
+            console.error(`Gem ${id} definitely does not exist.`);
+            return null;
+          }
+        }
+        
+        return { ...snap.data(), id: snap.id } as Gem;
+      } catch (err) {
+        console.error('Error fetching gem:', err);
+        return null;
+      }
     },
     {
       revalidateOnFocus: false,
@@ -72,13 +90,12 @@ export function useGem(id: string) {
  */
 export function useGuides(city?: string) {
   const { data, error, isLoading, mutate } = useSWR(
-    city ? `guides/${city}` : null,
+    city ? `guides/${city}` : 'guides/all',
     async () => {
-      const q = query(
-        collection(db, 'guides'),
-        where('city', '==', city),
-        limit(5)
-      );
+      const q = city 
+        ? query(collection(db, 'guides'), where('city', '==', city), limit(20))
+        : query(collection(db, 'guides'), where('verificationStatus', '==', 'approved'), limit(20));
+      
       const snap = await getDocs(q);
       return snap.docs.map(d => ({ ...d.data(), uid: d.id } as Guide));
     },
@@ -90,6 +107,42 @@ export function useGuides(city?: string) {
 
   return {
     guides: data || [],
+    error,
+    isLoading,
+    mutate
+  };
+}
+
+/**
+ * Hook to fetch multiple gems by IDs.
+ */
+export function useSavedGems(ids: string[]) {
+  const { data, error, isLoading, mutate } = useSWR(
+    ids && ids.length > 0 ? `saved-gems/${ids.join(',')}` : null,
+    async () => {
+      try {
+        // Firestore 'in' query is limited to 10-30 items depending on version
+        // We'll take the first 30 for the list view
+        const targetIds = ids.slice(0, 30);
+        const q = query(
+          collection(db, 'gems'),
+          where('__name__', 'in', targetIds)
+        );
+        const snap = await getDocs(q);
+        return snap.docs.map(d => ({ ...d.data(), id: d.id } as Gem));
+      } catch (err) {
+        console.error('Error fetching saved gems:', err);
+        return [];
+      }
+    },
+    {
+      revalidateOnFocus: false,
+      dedupingInterval: 60000,
+    }
+  );
+
+  return {
+    gems: data || [],
     error,
     isLoading,
     mutate

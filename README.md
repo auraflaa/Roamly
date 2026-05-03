@@ -27,9 +27,9 @@ Roamly isn't just feature-complete; it's optimized for user behavior:
 *   **Framework**: Next.js 15+ (App Router, Server Actions).
 *   **Styling**: Tailwind CSS v4 (Custom Design Tokens).
 *   **Motion**: Framer Motion (Orchestrated Staggered Animations).
-*   **Database**: Cloud Firestore (Real-time synchronization).
+*   **Database**: Cloud Firestore (Talk-with-Zeno named instance).
 *   **Auth**: Firebase Auth (Role-based: Traveler, Guide, Admin).
-*   **Storage**: Hugging Face Buckets (S3-compatible high-performance image delivery).
+*   **Storage**: Firestore Native (Optimized Base64 WebP Compression).
 *   **State**: Zustand (Local store) + AuthContext (Global session).
 
 ---
@@ -38,8 +38,7 @@ Roamly isn't just feature-complete; it's optimized for user behavior:
 
 ### Prerequisites
 *   Node.js 18+
-*   Firebase Project
-*   Hugging Face Token (for image storage)
+*   Firebase Project (Firestore enabled)
 
 ### Environment Setup
 Create a `.env.local` file:
@@ -51,9 +50,6 @@ NEXT_PUBLIC_FIREBASE_PROJECT_ID=xxx
 NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=xxx
 NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=xxx
 NEXT_PUBLIC_FIREBASE_APP_ID=xxx
-
-# Hugging Face (Storage)
-HF_TOKEN=xxx
 ```
 
 ### Installation
@@ -61,6 +57,11 @@ HF_TOKEN=xxx
 npm install
 npm run dev
 ```
+
+### Initial Data Sync
+1. Navigate to `/admin` (ensure you are logged in as admin).
+2. Click **"Reset & Seed"** to populate initial data.
+3. Click **"Sync Assets"** to download, compress, and store images directly in Firestore.
 
 ---
 
@@ -77,7 +78,7 @@ Roamly is optimized for **Vercel Free Tier**:
 1.  Connect your GitHub repository to Vercel.
 2.  Add the environment variables from `.env.local`.
 3.  Vercel will automatically detect Next.js and build the project.
-4.  **Note**: Large binary assets (APK/IPA) are excluded from the repository to keep the bundle lightweight.
+4.  **Note**: Assets are stored natively in Firestore, so no external storage bucket configuration is required after the initial sync.
 
 ---
 

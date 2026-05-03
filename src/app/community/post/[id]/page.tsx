@@ -30,22 +30,37 @@ export default function PostDetailPage() {
     }
   }, [post, firebaseUser]);
 
-  const handleLike = async () => {
-    if (!firebaseUser || !post) return;
-    const newIsLiked = !isLiked;
-    setIsLiked(newIsLiked);
+  const handleLike = async (e?: React.MouseEvent) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
     
-    // Optimistic UI update
-    mutate({
-      ...post,
-      likes: post.likes + (newIsLiked ? 1 : -1),
-      likedBy: newIsLiked 
-        ? [...(post.likedBy || []), firebaseUser.uid]
-        : (post.likedBy || []).filter(uid => uid !== firebaseUser.uid)
-    }, false);
+    if (!firebaseUser || !post) return;
+    
+    try {
+      const newIsLiked = !isLiked;
+      setIsLiked(newIsLiked);
+      
+      // Optimistic UI update
+      mutate({
+        ...post,
+        likes: post.likes + (newIsLiked ? 1 : -1),
+        likedBy: newIsLiked 
+          ? [...(post.likedBy || []), firebaseUser.uid]
+          : (post.likedBy || []).filter(uid => uid !== firebaseUser.uid)
+      }, false);
 
-    await toggleLike(post.id, firebaseUser.uid, newIsLiked);
-    mutate(); // Final sync
+      const result = await toggleLike(post.id, firebaseUser.uid, newIsLiked);
+      if (!result.success) {
+        console.error("Like failed:", result.error);
+        // Rollback
+        setIsLiked(!newIsLiked);
+        mutate();
+      }
+    } catch (err) {
+      console.error("Liking error:", err);
+    }
   };
 
   const handleComment = async (e: React.FormEvent) => {
@@ -55,20 +70,32 @@ export default function PostDetailPage() {
     const commentText = newComment.trim();
     setNewComment('');
     
-    // Add to UI
+    // Create temporary comment for optimistic update
     const tempComment: Comment = {
-      id: 'temp',
+      id: 'temp-' + Date.now(),
       postId: post.id,
       authorId: firebaseUser.uid,
       authorName: firebaseUser.displayName || 'Traveler',
       authorPhoto: firebaseUser.photoURL || '',
       text: commentText,
-      createdAt: { seconds: Date.now()/1000, nanoseconds: 0 } as any
+      createdAt: { seconds: Date.now() / 1000, nanoseconds: 0 } as any
     };
-    setComments(prev => [tempComment, ...prev]);
-    setPost(prev => prev ? { ...prev, commentCount: prev.commentCount + 1 } : null);
 
-    await addComment(post.id, firebaseUser.uid, firebaseUser.displayName || 'Traveler', commentText);
+    // Optimistic UI update via mutate
+    const currentData = { post, comments };
+    mutate({
+      post: { ...post, commentCount: post.commentCount + 1 },
+      comments: [tempComment, ...comments]
+    }, false);
+
+    const result = await addComment(post.id, firebaseUser.uid, firebaseUser.displayName || 'Traveler', commentText);
+    
+    if (!result.success) {
+      console.error("Comment failed:", result.error);
+      mutate(currentData); // Rollback
+    } else {
+      mutate(); // Sync final state
+    }
   };
 
   if (loading) {

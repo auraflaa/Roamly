@@ -100,21 +100,28 @@ export default function ProfilePage() {
       {/* Header */}
       <div className="flex items-center gap-6 mb-8">
         <div className="relative group">
-          <div className="w-24 h-24 rounded-full bg-brand-ember flex items-center justify-center text-white text-3xl font-bold flex-shrink-0 shadow-xl shadow-brand-ember/20 overflow-hidden">
+          <div className="w-24 h-24 rounded-full bg-brand-ember flex items-center justify-center text-white text-3xl font-bold flex-shrink-0 shadow-xl shadow-brand-ember/20 overflow-hidden relative">
             {userData.photoURL ? (
               <OptimizedImage 
                 src={userData.photoURL} 
                 alt={userData.displayName} 
                 aspectRatio="square"
-                className="w-full h-full object-cover" 
+                className="w-full h-full object-cover rounded-full" 
               />
             ) : (
               userData.displayName?.[0]?.toUpperCase() || 'U'
             )}
             
             {/* Upload Overlay */}
-            <label className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
-              {isUploading ? <Loader2 className="animate-spin text-white" /> : <Camera className="text-white" />}
+            <label className="absolute inset-0 bg-black/40 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-all cursor-pointer rounded-full backdrop-blur-[2px]">
+              {isUploading ? (
+                <Loader2 className="animate-spin text-white" size={20} />
+              ) : (
+                <>
+                  <Camera className="text-white mb-1" size={20} />
+                  <span className="text-[8px] text-white font-bold uppercase tracking-widest">Update</span>
+                </>
+              )}
               <input type="file" className="hidden" accept="image/*" onChange={handleAvatarUpload} disabled={isUploading} />
             </label>
           </div>
@@ -173,7 +180,11 @@ export default function ProfilePage() {
             </button>
           )}
           
-          <button className="w-full flex items-center justify-between p-4 transition-colors hover:bg-black/5 dark:hover:bg-white/5" style={{ borderBottom: '1px solid var(--border)' }}>
+          <button 
+            onClick={() => router.push('/account/safety')}
+            className="w-full flex items-center justify-between p-4 transition-colors hover:bg-black/5 dark:hover:bg-white/5" 
+            style={{ borderBottom: '1px solid var(--border)' }}
+          >
             <div className="flex items-center gap-3">
               <Shield size={20} className="text-brand-ember" />
               <span className="text-sm font-medium" style={{ color: 'var(--primary-text)' }}>Safety & Identity</span>
@@ -181,7 +192,10 @@ export default function ProfilePage() {
             <span className="text-secondary-text">›</span>
           </button>
 
-          <button className="w-full flex items-center justify-between p-4 transition-colors hover:bg-brand-ember/5">
+          <button 
+            onClick={() => router.push('/account/preferences')}
+            className="w-full flex items-center justify-between p-4 transition-colors hover:bg-brand-ember/5"
+          >
             <div className="flex items-center gap-3">
               <Settings size={20} className="text-brand-ember" />
               <span className="text-sm font-medium" style={{ color: 'var(--primary-text)' }}>Preferences</span>
@@ -191,7 +205,11 @@ export default function ProfilePage() {
         </div>
 
         <div className="rounded-[16px] overflow-hidden" style={{ background: 'var(--card)', border: '1px solid var(--border)' }}>
-          <button className="w-full flex items-center justify-between p-4 transition-colors hover:bg-black/5 dark:hover:bg-white/5" style={{ borderBottom: '1px solid var(--border)' }}>
+          <button 
+            onClick={() => router.push('/account/saved')}
+            className="w-full flex items-center justify-between p-4 transition-colors hover:bg-black/5 dark:hover:bg-white/5" 
+            style={{ borderBottom: '1px solid var(--border)' }}
+          >
             <div className="flex items-center gap-3">
               <Heart size={20} className="text-brand-ember" />
               <span className="text-sm font-medium" style={{ color: 'var(--primary-text)' }}>Saved Gems</span>
@@ -199,7 +217,11 @@ export default function ProfilePage() {
             <span className="text-secondary-text">›</span>
           </button>
 
-          <button className="w-full flex items-center justify-between p-4 transition-colors hover:bg-black/5 dark:hover:bg-white/5" style={{ borderBottom: '1px solid var(--border)' }}>
+          <button 
+            onClick={() => router.push('/account/reviews')}
+            className="w-full flex items-center justify-between p-4 transition-colors hover:bg-black/5 dark:hover:bg-white/5" 
+            style={{ borderBottom: '1px solid var(--border)' }}
+          >
             <div className="flex items-center gap-3">
               <Star size={20} className="text-brand-ember" />
               <span className="text-sm font-medium" style={{ color: 'var(--primary-text)' }}>My Reviews</span>
@@ -207,7 +229,10 @@ export default function ProfilePage() {
             <span className="text-secondary-text">›</span>
           </button>
 
-          <button className="w-full flex items-center justify-between p-4 transition-colors hover:bg-brand-ember/5">
+          <button 
+            onClick={() => router.push('/account/itineraries')}
+            className="w-full flex items-center justify-between p-4 transition-colors hover:bg-brand-ember/5"
+          >
             <div className="flex items-center gap-3">
               <MapPin size={20} className="text-brand-ember" />
               <span className="text-sm font-medium" style={{ color: 'var(--primary-text)' }}>My Itineraries</span>

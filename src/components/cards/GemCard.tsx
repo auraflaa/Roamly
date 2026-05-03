@@ -37,8 +37,13 @@ import { useSWRConfig } from 'swr';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 
-export default function GemCard({ gem, onSave, isSaved, personalized }: GemCardProps) {
+export default function GemCard({ gem, onSave, isSaved: initialIsSaved, personalized }: GemCardProps) {
   const { mutate } = useSWRConfig();
+  const [isSaved, setIsSaved] = React.useState(initialIsSaved);
+
+  React.useEffect(() => {
+    setIsSaved(initialIsSaved);
+  }, [initialIsSaved]);
 
   const prefetchData = () => {
     mutate(`gem/${gem.id}`, async () => {
@@ -46,6 +51,15 @@ export default function GemCard({ gem, onSave, isSaved, personalized }: GemCardP
       const snap = await getDoc(docRef);
       return { ...snap.data(), id: snap.id } as Gem;
     }, { revalidate: false });
+  };
+
+  const handleSave = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (onSave) {
+      setIsSaved(!isSaved);
+      onSave(gem.id);
+    }
   };
 
   return (
@@ -79,8 +93,8 @@ export default function GemCard({ gem, onSave, isSaved, personalized }: GemCardP
           {/* Quick Save Action */}
           {onSave && (
             <button
-              onClick={(e) => { e.preventDefault(); e.stopPropagation(); onSave(gem.id); }}
-              className="absolute top-3 right-3 p-2 rounded-full glass transition-all hover:scale-110"
+              onClick={handleSave}
+              className="absolute top-3 right-3 p-2 rounded-full glass transition-all hover:scale-110 active:scale-95 z-10"
             >
               <Heart
                 size={16}

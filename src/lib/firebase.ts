@@ -1,18 +1,14 @@
-/**
- * @file firebase.ts
- * @description Centralized Firebase SDK initialization for Roamly.
- * Handles Auth, Firestore, and Storage with singleton patterns to support Next.js Fast Refresh.
- */
-
-import { initializeApp, getApps } from 'firebase/app';
+import { initializeApp, getApps, getApp } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
-import { initializeFirestore, persistentLocalCache, persistentMultipleTabManager } from 'firebase/firestore';
-import { getStorage } from 'firebase/storage';
+import { 
+  getFirestore, 
+  initializeFirestore, 
+  Firestore, 
+  persistentLocalCache, 
+  persistentMultipleTabManager,
+  memoryLocalCache
+} from 'firebase/firestore';
 
-/**
- * Firebase Client-Side Configuration.
- * Values are populated from .env.local during development and Vercel Environment Variables in production.
- */
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
   authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
@@ -24,33 +20,37 @@ const firebaseConfig = {
   measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID,
 };
 
-// Singleton initialization pattern to prevent "Firebase App already exists" errors during Next.js hot-reloading.
-const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
+// 1. Initialize App (Singleton)
+const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
 
-/**
- * Firebase Authentication instance.
- */
+// 2. Initialize Auth (Singleton)
 export const auth = getAuth(app);
 
+// 3. Initialize Firestore (SSR-Aware Hardened Singleton)
+const isClient = typeof window !== 'undefined';
+const DB_NAME = "talk-with-zeno";
 
 /**
- * Cloud Firestore database instance.
- * Note: Configured to use the specific "talk-with-zeno" named database.
- * Optimized with long-polling to prevent GrpcConnection ECONNRESET errors.
- * Persistent cache configured for multi-tab support.
+ * Creates or retrieves the Firestore instance for the specified database.
+ * Uses persistent local cache on the client and memory cache on the server.
+ * Enforces long polling to stabilize connections in restricted networks.
  */
-export const db = initializeFirestore(app, {
-  experimentalForceLongPolling: true,
-  useFetchStreams: false,
-  cache: typeof window !== 'undefined' ? persistentLocalCache({
-    tabManager: persistentMultipleTabManager(),
-  }) : undefined,
-}, "talk-with-zeno");
+function getHardenedFirestore(): Firestore {
+  try {
+    // Attempt to initialize with our specific hardening settings
+    return initializeFirestore(app, {
+      localCache: isClient 
+        ? persistentLocalCache({ tabManager: persistentMultipleTabManager() })
+        : memoryLocalCache(),
+      experimentalForceLongPolling: true,
+      useFetchStreams: false,
+    }, DB_NAME);
+  } catch (e) {
+    // If already initialized (common in dev/HMR), get the existing instance
+    return getFirestore(app, DB_NAME);
+  }
+}
 
-/**
- * Cloud Storage instance.
- * Primarily used for profile avatars and gem images.
- */
-export const storage = getStorage(app);
-
+export const db = getHardenedFirestore();
+export { app };
 export default app;

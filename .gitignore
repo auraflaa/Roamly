@@ -55,3 +55,9 @@ yarn-error.log*
 # Branding Assets (Source Folders)
 /Roamly_Logo_PNGs/
 /Roamly_Logo_Transparent_PNGs/
+
+# Firebase
+.firebase/
+firebase-debug.log*
+.firebaserc
+.convo/

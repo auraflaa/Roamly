@@ -13,12 +13,30 @@ import { useAuth } from '@/lib/auth-context';
 import { Sparkles } from 'lucide-react';
 
 import { useGems } from '@/lib/hooks/use-gems';
+import { useUserActions } from '@/lib/hooks/use-user';
+import { useRouter } from 'next/navigation';
 
 export default function ExplorePage() {
+  const router = useRouter();
   const { gems, isLoading: loading } = useGems({ limit: 40 });
   const [showFilters, setShowFilters] = useState(false);
-  const { filters, setVibeFilter, setModeFilter, setSearchQuery, resetFilters } = useExploreStore();
-  const { userData } = useAuth();
+  const { filters, setVibeFilter, setModeFilter, setSearchQuery, setMinRating, resetFilters } = useExploreStore();
+  const { firebaseUser, userData } = useAuth();
+  const { toggleSavedGem } = useUserActions();
+
+  const handleSave = async (gemId: string) => {
+    if (!firebaseUser) {
+      router.push('/login');
+      return;
+    }
+    const isSaving = !userData?.savedGems?.includes(gemId);
+    
+    try {
+      await toggleSavedGem(gemId, isSaving, gems.find(g => g.id === gemId)?.vibes[0]);
+    } catch (err) {
+      console.error("Error in handleSave:", err);
+    }
+  };
 
   // Filter gems client-side
   const filteredGems = gems.filter(gem => {
@@ -201,7 +219,16 @@ export default function ExplorePage() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 stagger-children">
           {filteredGems.map(gem => {
             const isPersonalized = userData?.vibeAffinities && gem.vibes.some(v => (userData.vibeAffinities?.[v]?.score || 0) > 5);
-            return <GemCard key={gem.id} gem={gem} personalized={isPersonalized} />;
+            const isSaved = userData?.savedGems?.includes(gem.id);
+            return (
+              <GemCard 
+                key={gem.id} 
+                gem={gem} 
+                personalized={isPersonalized} 
+                isSaved={isSaved}
+                onSave={() => handleSave(gem.id)}
+              />
+            );
           })}
         </div>
       )}
