@@ -1,4 +1,13 @@
+<div align="center">
+
 # Roamly
+
+
+[![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE) [![TypeScript](https://img.shields.io/badge/TypeScript-4.0-blue.svg)](https://www.typescriptlang.org/)
+
+</div>
+
+---
 
 Roamly is a premium, story-driven travel marketplace designed to connect travelers with authentic, local-insider experiences ("Gems"). 
 
